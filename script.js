@@ -404,7 +404,8 @@ function addToCart(id){
 function renderCart(){
   const wrap = $('#cartItems');
   if(CART.length===0){
-    wrap.innerHTML = `<div class="empty-cart"><i class="fa-solid fa-basket-shopping"></i><p>Cart is empty — add something spicy!</p></div>`;
+    const emptyMsg = (typeof TRANSLATIONS !== 'undefined' && TRANSLATIONS[currentLang]) ? TRANSLATIONS[currentLang].cart_empty : 'Cart is empty — add something spicy!';
+    wrap.innerHTML = `<div class="empty-cart"><i class="fa-solid fa-basket-shopping"></i><p>${emptyMsg}</p></div>`;
   } else {
     wrap.innerHTML = CART.map(c=>`
       <div class="cart-item">
@@ -529,7 +530,20 @@ $('#confirmPaymentBtn').addEventListener('click', ()=>{
   renderPaymentsTable();
   updateTokenPreview();
   toast(`Order #${order.token} placed successfully`, 'success');
+  saveReceiptToBlob(order);
 });
+
+// Sends the receipt to /api/save-receipt, which uses @vercel/blob on the
+// server to store it. Only works once this project is deployed on Vercel
+// with a Blob store connected — fails silently otherwise (e.g. when the
+// files are just opened locally in a browser), so it never breaks the POS.
+function saveReceiptToBlob(order){
+  fetch('/api/save-receipt', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify(order)
+  }).catch(()=>{ /* no backend available in this environment — ignore */ });
+}
 
 function buildReceipt(order){
   const itemsHtml = order.items.map(i=>`
@@ -692,6 +706,30 @@ function renderMenuTable(filterCat="All"){
   }));
 }
 $('#menuMgSearch').addEventListener('input', ()=> renderMenuTable());
+
+$('#addMenuItemBtn').addEventListener('click', ()=>{
+  $('#categoryList').innerHTML = getCategories().filter(c=>c!=='All').map(c=>`<option value="${c}"></option>`).join('');
+  $('#menuItemModal').classList.remove('hidden');
+});
+
+$('#saveMenuItemBtn').addEventListener('click', ()=>{
+  const name = $('#newItemName').value.trim();
+  const cat = $('#newItemCat').value.trim();
+  const price = +$('#newItemPrice').value;
+  if(!name || !cat || !price){ toast('Item name, category and price are required', 'error'); return; }
+
+  const newId = Math.max(0, ...MENU.map(m=>m.id)) + 1;
+  MENU.push({ id:newId, name, cat, price, stock:$('#newItemStock').value, fav:false });
+
+  renderCategoryTabs();
+  renderCatTabsManage();
+  renderMenuGrid();
+  renderMenuTable();
+  closeModal('menuItemModal');
+  ['newItemName','newItemCat','newItemPrice'].forEach(id=>{ $('#'+id).value=''; });
+  $('#newItemStock').value='in';
+  toast(`${name} added to menu`, 'success');
+});
 
 /* -------------------------------------------------------------------------
    12. CUSTOMERS
@@ -979,9 +1017,6 @@ $('#saveSettingsBtn').addEventListener('click', ()=>{
   computeTotals();
   toast('Settings saved successfully','success');
 });
-$('#langSelect').addEventListener('change', e=>{
-  toast(`Interface language set to ${e.target.value} (demo)`, 'info');
-});
 
 /* -------------------------------------------------------------------------
    18. BACK TO TOP
@@ -998,3 +1033,233 @@ document.addEventListener('DOMContentLoaded', ()=>{
   renderTopLists();
   renderPaymentsTable();
 });
+
+/* -------------------------------------------------------------------------
+   20. LANGUAGE SYSTEM (English / Urdu / Sindhi)
+   Every element tagged data-i18n="key" gets its text swapped; elements
+   tagged data-i18n-placeholder="key" get their placeholder swapped.
+   ------------------------------------------------------------------------- */
+const TRANSLATIONS = {
+  en: {
+    nav_dashboard:"Dashboard", nav_neworder:"New Order", nav_kitchen:"Kitchen Orders", nav_menu:"Menu",
+    nav_customers:"Customers", nav_payments:"Payments", nav_inventory:"Inventory", nav_reports:"Reports",
+    nav_offers:"Offers", nav_settings:"Settings", nav_logout:"Logout",
+    notifications:"Notifications", role_view_only:"View Only", my_profile:"My Profile",
+    page_dashboard_title:"Dashboard", dash_subtitle:"Welcome back — here's how Mirchi 365 is doing today.",
+    stat_today_sales:"Today's Sales", stat_today_orders:"Today's Orders", stat_customers:"Customers",
+    stat_pending_orders:"Pending Orders", stat_completed_orders:"Completed Orders", stat_monthly_revenue:"Monthly Revenue",
+    stat_best_seller:"Best Seller", stat_low_stock:"Low Stock Alerts",
+    panel_revenue_week:"Revenue this week", panel_live_kitchen:"Live Kitchen Queue", link_view_all:"View all",
+    page_neworder_title:"New Order", token_label:"Token", ph_search_menu:"Search menu…",
+    cart_label:"Cart", clear_label:"Clear", dine_in:"Dine In", take_away:"Take Away", delivery_label:"Delivery",
+    ph_cust_name:"Customer name", ph_cust_phone:"Phone number", ph_cust_address:"Address", ph_cust_table:"Table number",
+    cart_empty:"Cart is empty — add something spicy!", subtotal_label:"Subtotal", discount_label:"Discount",
+    service_charges_label:"Service Charges", delivery_charges_label:"Delivery Charges", grand_total_label:"Grand Total",
+    checkout_label:"Checkout",
+    page_kitchen_title:"Kitchen Orders (KOT)", kitchen_subtitle:"Live order tickets for the kitchen team.",
+    kot_status_pending:"Pending", kot_status_preparing:"Preparing", kot_status_ready:"Ready", kot_status_delivered:"Delivered",
+    page_menu_title:"Menu Management", menu_subtitle:"All food items across categories.", ph_search_generic:"Search…",
+    th_item:"Item", th_category:"Category", th_price:"Price", th_stock:"Stock",
+    btn_add_item:"Add Item", modal_add_menu_item:"Add Menu Item", lbl_item_name:"Item Name",
+    page_customers_title:"Customers", customers_subtitle:"Manage your guests and reward points.",
+    btn_add_customer:"Add Customer", th_name:"Name", th_phone:"Phone", th_orders:"Orders",
+    th_total_spent:"Total Spent", th_reward_pts:"Reward Pts",
+    page_payments_title:"Payments", payments_subtitle:"Accepted methods & recent transactions.",
+    pay_cash:"Cash", pay_cash_desc:"Paid at counter", pay_easypaisa:"Easypaisa", pay_jazzcash:"JazzCash",
+    pay_bank:"Bank Transfer", pay_card:"Card Payment", pay_card_desc:"Visa / Mastercard", pay_qr:"Scan QR",
+    panel_recent_transactions:"Recent Transactions", th_token:"Token", th_customer:"Customer", th_method:"Method",
+    th_amount:"Amount", th_status:"Status",
+    page_inventory_title:"Inventory", inventory_subtitle:"Track stock and ingredient levels.",
+    th_ingredient:"Ingredient", th_unit:"Unit", th_supplier:"Supplier", th_purchase_price:"Purchase Price",
+    th_selling_price:"Selling Price",
+    page_reports_title:"Reports", reports_subtitle:"Sales performance overview.",
+    range_today:"Today", range_weekly:"Weekly", range_monthly:"Monthly", range_yearly:"Yearly",
+    panel_revenue_trend:"Revenue Trend", panel_top_items:"Top Selling Items", panel_top_customers:"Top Customers",
+    panel_payment_breakdown:"Payment Breakdown",
+    page_offers_title:"Offers & Discounts", offers_subtitle:"Deals and promo codes running today.", btn_add_offer:"Add Offer",
+    page_settings_title:"Settings", settings_subtitle:"Configure your restaurant profile.",
+    panel_restaurant_profile:"Restaurant Profile", lbl_restaurant_name:"Restaurant Name",
+    lbl_phone1:"Phone 1", lbl_phone2:"Phone 2", lbl_phone3:"Phone 3", lbl_address:"Address",
+    panel_billing:"Billing", lbl_currency:"Currency", lbl_tax:"Tax %", lbl_service_charge:"Service Charge %",
+    lbl_delivery_charges:"Default Delivery Charges", panel_preferences:"Preferences", lbl_dark_mode:"Dark Mode",
+    lbl_language:"Language", lbl_printer:"Printer", btn_save_settings:"Save Settings",
+    footer_credit:"This website was made by",
+    login_tagline:"Spice that never stops", lbl_username:"Username", lbl_password:"Password",
+    lbl_remember_me:"Remember me", lbl_forgot_password:"Forgot password?", btn_login:"Login",
+    forgot_title:"Reset access", forgot_desc:"Enter your registered phone number and the shift manager will issue a temporary PIN.",
+    btn_send_request:"Send request",
+    lbl_full_name:"Full Name", lbl_phone_number:"Phone Number", lbl_email:"Email", lbl_role:"Role", btn_save_profile:"Save Profile",
+    lbl_name:"Name", lbl_phone:"Phone", btn_save_customer:"Save Customer",
+    modal_add_inventory:"Add Inventory Item", lbl_ingredient_name:"Ingredient Name", lbl_stock_qty:"Stock Qty",
+    lbl_unit:"Unit", lbl_supplier:"Supplier", lbl_purchase_price:"Purchase Price", lbl_selling_price:"Selling Price",
+    btn_save_item:"Save Item",
+    modal_add_offer:"Add New Offer", lbl_offer_type:"Offer Type / Tag", opt_custom_discount:"Custom Discount",
+    opt_birthday_package:"Birthday Package", opt_promo_code:"Promo Code", lbl_title:"Title", lbl_description:"Description",
+    lbl_offer_price:"Offer Price (Rs)", lbl_original_price:"Original Price (optional)", lbl_countdown:"Countdown Timer",
+    opt_no_countdown:"No countdown", opt_ends_today:"Ends today (midnight)", opt_ends_3days:"Ends in 3 days",
+    opt_ends_7days:"Ends in 7 days", btn_save_offer:"Save Offer",
+    modal_select_payment:"Select Payment Method", pay_bank_short:"Bank", pay_card_short:"Card", pay_split:"Split",
+    lbl_total_payable:"Total Payable", btn_confirm_receipt:"Confirm & Generate Receipt",
+    btn_print:"Print", btn_download_pdf:"Download PDF",
+  },
+  ur: {
+    nav_dashboard:"ڈیش بورڈ", nav_neworder:"نیا آرڈر", nav_kitchen:"کچن آرڈرز", nav_menu:"مینو",
+    nav_customers:"کسٹمرز", nav_payments:"ادائیگیاں", nav_inventory:"انوینٹری", nav_reports:"رپورٹس",
+    nav_offers:"آفرز", nav_settings:"ترتیبات", nav_logout:"لاگ آؤٹ",
+    notifications:"اطلاعات", role_view_only:"صرف ملاحظہ", my_profile:"میری پروفائل",
+    page_dashboard_title:"ڈیش بورڈ", dash_subtitle:"خوش آمدید — آج مرچی 365 کی کارکردگی ملاحظہ کریں۔",
+    stat_today_sales:"آج کی سیل", stat_today_orders:"آج کے آرڈرز", stat_customers:"کسٹمرز",
+    stat_pending_orders:"زیرِ التوا آرڈرز", stat_completed_orders:"مکمل آرڈرز", stat_monthly_revenue:"ماہانہ آمدنی",
+    stat_best_seller:"سب سے زیادہ فروخت", stat_low_stock:"کم اسٹاک الرٹس",
+    panel_revenue_week:"اس ہفتے کی آمدنی", panel_live_kitchen:"لائیو کچن قطار", link_view_all:"سب دیکھیں",
+    page_neworder_title:"نیا آرڈر", token_label:"ٹوکن", ph_search_menu:"مینو تلاش کریں…",
+    cart_label:"کارٹ", clear_label:"صاف کریں", dine_in:"بیٹھ کر کھانا", take_away:"لے جانا", delivery_label:"ڈیلیوری",
+    ph_cust_name:"کسٹمر کا نام", ph_cust_phone:"فون نمبر", ph_cust_address:"پتہ", ph_cust_table:"ٹیبل نمبر",
+    cart_empty:"کارٹ خالی ہے — کچھ تیز مزیدار شامل کریں!", subtotal_label:"سب ٹوٹل", discount_label:"رعایت",
+    service_charges_label:"سروس چارجز", delivery_charges_label:"ڈیلیوری چارجز", grand_total_label:"کل رقم",
+    checkout_label:"چیک آؤٹ",
+    page_kitchen_title:"کچن آرڈرز (KOT)", kitchen_subtitle:"کچن ٹیم کے لیے لائیو آرڈر ٹکٹس۔",
+    kot_status_pending:"زیرِ التوا", kot_status_preparing:"تیار ہو رہا ہے", kot_status_ready:"تیار", kot_status_delivered:"پہنچا دیا گیا",
+    page_menu_title:"مینو مینجمنٹ", menu_subtitle:"تمام کیٹیگریز کی فوڈ آئٹمز۔", ph_search_generic:"تلاش کریں…",
+    th_item:"آئٹم", th_category:"کیٹیگری", th_price:"قیمت", th_stock:"اسٹاک",
+    btn_add_item:"آئٹم شامل کریں", modal_add_menu_item:"مینو آئٹم شامل کریں", lbl_item_name:"آئٹم کا نام",
+    page_customers_title:"کسٹمرز", customers_subtitle:"اپنے مہمانوں اور ریوارڈ پوائنٹس کو منظم کریں۔",
+    btn_add_customer:"کسٹمر شامل کریں", th_name:"نام", th_phone:"فون", th_orders:"آرڈرز",
+    th_total_spent:"کل خرچ", th_reward_pts:"ریوارڈ پوائنٹس",
+    page_payments_title:"ادائیگیاں", payments_subtitle:"قابلِ قبول طریقے اور حالیہ لین دین۔",
+    pay_cash:"نقد", pay_cash_desc:"کاؤنٹر پر ادا کریں", pay_easypaisa:"ایزی پیسہ", pay_jazzcash:"جاز کیش",
+    pay_bank:"بینک ٹرانسفر", pay_card:"کارڈ ادائیگی", pay_card_desc:"ویزا / ماسٹر کارڈ", pay_qr:"QR اسکین کریں",
+    panel_recent_transactions:"حالیہ لین دین", th_token:"ٹوکن", th_customer:"کسٹمر", th_method:"طریقہ",
+    th_amount:"رقم", th_status:"صورتحال",
+    page_inventory_title:"انوینٹری", inventory_subtitle:"اسٹاک اور اجزاء کی سطح ٹریک کریں۔",
+    th_ingredient:"جزو", th_unit:"اکائی", th_supplier:"سپلائر", th_purchase_price:"خریداری قیمت",
+    th_selling_price:"فروخت قیمت",
+    page_reports_title:"رپورٹس", reports_subtitle:"سیل کی کارکردگی کا جائزہ۔",
+    range_today:"آج", range_weekly:"ہفتہ وار", range_monthly:"ماہانہ", range_yearly:"سالانہ",
+    panel_revenue_trend:"آمدنی کا رجحان", panel_top_items:"زیادہ فروخت ہونے والے آئٹمز", panel_top_customers:"بہترین کسٹمرز",
+    panel_payment_breakdown:"ادائیگی کی تفصیل",
+    page_offers_title:"آفرز اور رعایتیں", offers_subtitle:"آج کی ڈیلز اور پرومو کوڈز۔", btn_add_offer:"آفر شامل کریں",
+    page_settings_title:"ترتیبات", settings_subtitle:"اپنے ریسٹورنٹ پروفائل کو ترتیب دیں۔",
+    panel_restaurant_profile:"ریسٹورنٹ پروفائل", lbl_restaurant_name:"ریسٹورنٹ کا نام",
+    lbl_phone1:"فون 1", lbl_phone2:"فون 2", lbl_phone3:"فون 3", lbl_address:"پتہ",
+    panel_billing:"بلنگ", lbl_currency:"کرنسی", lbl_tax:"ٹیکس %", lbl_service_charge:"سروس چارج %",
+    lbl_delivery_charges:"ڈیفالٹ ڈیلیوری چارجز", panel_preferences:"ترجیحات", lbl_dark_mode:"ڈارک موڈ",
+    lbl_language:"زبان", lbl_printer:"پرنٹر", btn_save_settings:"ترتیبات محفوظ کریں",
+    footer_credit:"یہ ویب سائٹ بنائی گئی ہے",
+    login_tagline:"وہ مصالحہ جو کبھی نہیں رکتا", lbl_username:"صارف نام", lbl_password:"پاسورڈ",
+    lbl_remember_me:"مجھے یاد رکھیں", lbl_forgot_password:"پاسورڈ بھول گئے؟", btn_login:"لاگ ان",
+    forgot_title:"رسائی دوبارہ ترتیب دیں", forgot_desc:"اپنا رجسٹرڈ فون نمبر درج کریں، شفٹ منیجر عارضی پن جاری کرے گا۔",
+    btn_send_request:"درخواست بھیجیں",
+    lbl_full_name:"پورا نام", lbl_phone_number:"فون نمبر", lbl_email:"ای میل", lbl_role:"کردار", btn_save_profile:"پروفائل محفوظ کریں",
+    lbl_name:"نام", lbl_phone:"فون", btn_save_customer:"کسٹمر محفوظ کریں",
+    modal_add_inventory:"انوینٹری آئٹم شامل کریں", lbl_ingredient_name:"جزو کا نام", lbl_stock_qty:"اسٹاک مقدار",
+    lbl_unit:"اکائی", lbl_supplier:"سپلائر", lbl_purchase_price:"خریداری قیمت", lbl_selling_price:"فروخت قیمت",
+    btn_save_item:"آئٹم محفوظ کریں",
+    modal_add_offer:"نئی آفر شامل کریں", lbl_offer_type:"آفر کی قسم / ٹیگ", opt_custom_discount:"اپنی مرضی کی رعایت",
+    opt_birthday_package:"سالگرہ پیکج", opt_promo_code:"پرومو کوڈ", lbl_title:"عنوان", lbl_description:"تفصیل",
+    lbl_offer_price:"آفر قیمت (روپے)", lbl_original_price:"اصل قیمت (اختیاری)", lbl_countdown:"کاؤنٹ ڈاؤن ٹائمر",
+    opt_no_countdown:"کوئی کاؤنٹ ڈاؤن نہیں", opt_ends_today:"آج آدھی رات ختم", opt_ends_3days:"3 دن میں ختم",
+    opt_ends_7days:"7 دن میں ختم", btn_save_offer:"آفر محفوظ کریں",
+    modal_select_payment:"ادائیگی کا طریقہ منتخب کریں", pay_bank_short:"بینک", pay_card_short:"کارڈ", pay_split:"تقسیم",
+    lbl_total_payable:"کل قابلِ ادائیگی", btn_confirm_receipt:"تصدیق کریں اور رسید بنائیں",
+    btn_print:"پرنٹ", btn_download_pdf:"PDF ڈاؤن لوڈ کریں",
+  },
+  sd: {
+    nav_dashboard:"ڊيش بورڊ", nav_neworder:"نئون آرڊر", nav_kitchen:"ڪچن آرڊر", nav_menu:"مينيو",
+    nav_customers:"گراهڪ", nav_payments:"ادائيگيون", nav_inventory:"انونٽري", nav_reports:"رپورٽون",
+    nav_offers:"آفرون", nav_settings:"سيٽنگون", nav_logout:"لاگ آئوٽ",
+    notifications:"اطلاعون", role_view_only:"صرف ڏسڻ", my_profile:"منهنجي پروفائيل",
+    page_dashboard_title:"ڊيش بورڊ", dash_subtitle:"ڀليڪار — اڄ مرچي 365 ڪيئن ڪم ڪري رهيو آهي.",
+    stat_today_sales:"اڄ جي وڪرو", stat_today_orders:"اڄ جا آرڊر", stat_customers:"گراهڪ",
+    stat_pending_orders:"بيٺل آرڊر", stat_completed_orders:"مڪمل آرڊر", stat_monthly_revenue:"مهيني جي آمدني",
+    stat_best_seller:"سڀ کان وڌيڪ وڪامندڙ", stat_low_stock:"گهٽ اسٽاڪ خبردار",
+    panel_revenue_week:"هن هفتي جي آمدني", panel_live_kitchen:"لائيو ڪچن قطار", link_view_all:"سڀ ڏسو",
+    page_neworder_title:"نئون آرڊر", token_label:"ٽوڪن", ph_search_menu:"مينيو ڳوليو…",
+    cart_label:"ڪارٽ", clear_label:"صاف ڪريو", dine_in:"ويهي کائڻ", take_away:"کڻي وڃڻ", delivery_label:"ڊليوري",
+    ph_cust_name:"گراهڪ جو نالو", ph_cust_phone:"فون نمبر", ph_cust_address:"پتو", ph_cust_table:"ٽيبل نمبر",
+    cart_empty:"ڪارٽ خالي آهي — ڪجهه مساليدار شامل ڪريو!", subtotal_label:"سب ٽوٽل", discount_label:"رعايت",
+    service_charges_label:"سروس چارجز", delivery_charges_label:"ڊليوري چارجز", grand_total_label:"ڪل رقم",
+    checkout_label:"چيڪ آئوٽ",
+    page_kitchen_title:"ڪچن آرڊر (KOT)", kitchen_subtitle:"ڪچن ٽيم لاءِ لائيو آرڊر ٽڪيٽون.",
+    kot_status_pending:"بيٺل", kot_status_preparing:"تيار ٿي رهيو آهي", kot_status_ready:"تيار", kot_status_delivered:"پهچائي ڇڏيو ويو",
+    page_menu_title:"مينيو مينيجمينٽ", menu_subtitle:"سڀني ڪيٽيگرين جا فوڊ آئٽم.", ph_search_generic:"ڳوليو…",
+    th_item:"آئٽم", th_category:"ڪيٽيگري", th_price:"قيمت", th_stock:"اسٽاڪ",
+    btn_add_item:"آئٽم شامل ڪريو", modal_add_menu_item:"مينيو آئٽم شامل ڪريو", lbl_item_name:"آئٽم جو نالو",
+    page_customers_title:"گراهڪ", customers_subtitle:"پنهنجن مهمانن ۽ رعايتي پوائنٽن کي سنڀاليو.",
+    btn_add_customer:"گراهڪ شامل ڪريو", th_name:"نالو", th_phone:"فون", th_orders:"آرڊر",
+    th_total_spent:"ڪل خرچ", th_reward_pts:"رعايتي پوائنٽ",
+    page_payments_title:"ادائيگيون", payments_subtitle:"قبول ٿيندڙ طريقا ۽ تازيون ادائيگيون.",
+    pay_cash:"نقد", pay_cash_desc:"ڪائونٽر تي ادا ڪريو", pay_easypaisa:"ايزي پيسا", pay_jazzcash:"جاز ڪيش",
+    pay_bank:"بينڪ ٽرانسفر", pay_card:"ڪارڊ ادائيگي", pay_card_desc:"ويزا / ماسٽر ڪارڊ", pay_qr:"QR اسڪين ڪريو",
+    panel_recent_transactions:"تازيون ادائيگيون", th_token:"ٽوڪن", th_customer:"گراهڪ", th_method:"طريقو",
+    th_amount:"رقم", th_status:"حالت",
+    page_inventory_title:"انونٽري", inventory_subtitle:"اسٽاڪ ۽ سامان جي سطح جو حساب رکو.",
+    th_ingredient:"سامان", th_unit:"يونٽ", th_supplier:"سپلائر", th_purchase_price:"خريداري قيمت",
+    th_selling_price:"وڪرو قيمت",
+    page_reports_title:"رپورٽون", reports_subtitle:"وڪري جي ڪارڪردگي جو جائزو.",
+    range_today:"اڄ", range_weekly:"هفتيوار", range_monthly:"مهيني وار", range_yearly:"سال وار",
+    panel_revenue_trend:"آمدني جو رجحان", panel_top_items:"وڌيڪ وڪامندڙ آئٽم", panel_top_customers:"بهترين گراهڪ",
+    panel_payment_breakdown:"ادائيگي جو تفصيل",
+    page_offers_title:"آفرون ۽ رعايتون", offers_subtitle:"اڄ جون ڊيلز ۽ پروموڪوڊ.", btn_add_offer:"آفر شامل ڪريو",
+    page_settings_title:"سيٽنگون", settings_subtitle:"پنهنجي ريسٽورنٽ پروفائيل سيٽ ڪريو.",
+    panel_restaurant_profile:"ريسٽورنٽ پروفائيل", lbl_restaurant_name:"ريسٽورنٽ جو نالو",
+    lbl_phone1:"فون 1", lbl_phone2:"فون 2", lbl_phone3:"فون 3", lbl_address:"پتو",
+    panel_billing:"بلنگ", lbl_currency:"ڪرنسي", lbl_tax:"ٽيڪس %", lbl_service_charge:"سروس چارج %",
+    lbl_delivery_charges:"ڊفالٽ ڊليوري چارجز", panel_preferences:"پسنديدگيون", lbl_dark_mode:"ڊارڪ موڊ",
+    lbl_language:"ٻولي", lbl_printer:"پرنٽر", btn_save_settings:"سيٽنگون سانڍيو",
+    footer_credit:"هي ويبسائيٽ ٺاهي وئي آهي",
+    login_tagline:"اهو مسالو جيڪو ڪڏهن نه ٿو رڪجي", lbl_username:"يوزر نالو", lbl_password:"پاسورڊ",
+    lbl_remember_me:"مونکي ياد رکو", lbl_forgot_password:"پاسورڊ وسري ويو؟", btn_login:"لاگ اِن",
+    forgot_title:"رسائي ٻيهر سيٽ ڪريو", forgot_desc:"پنهنجو رجسٽرڊ فون نمبر داخل ڪريو، شفٽ مئنيجر عارضي پن جاري ڪندو.",
+    btn_send_request:"درخواست موڪليو",
+    lbl_full_name:"پورو نالو", lbl_phone_number:"فون نمبر", lbl_email:"اي ميل", lbl_role:"ڪردار", btn_save_profile:"پروفائيل سانڍيو",
+    lbl_name:"نالو", lbl_phone:"فون", btn_save_customer:"گراهڪ سانڍيو",
+    modal_add_inventory:"انونٽري آئٽم شامل ڪريو", lbl_ingredient_name:"سامان جو نالو", lbl_stock_qty:"اسٽاڪ مقدار",
+    lbl_unit:"يونٽ", lbl_supplier:"سپلائر", lbl_purchase_price:"خريداري قيمت", lbl_selling_price:"وڪرو قيمت",
+    btn_save_item:"آئٽم سانڍيو",
+    modal_add_offer:"نئون آفر شامل ڪريو", lbl_offer_type:"آفر جو قسم / ٽيگ", opt_custom_discount:"پنهنجي مرضي جي رعايت",
+    opt_birthday_package:"سالگره پيڪيج", opt_promo_code:"پروموڪوڊ", lbl_title:"عنوان", lbl_description:"تفصيل",
+    lbl_offer_price:"آفر قيمت (روپيا)", lbl_original_price:"اصلي قيمت (اختياري)", lbl_countdown:"ڪائونٽ ڊائون ٽائمر",
+    opt_no_countdown:"ڪوبه ڪائونٽ ڊائون ناهي", opt_ends_today:"اڄ اڌ رات ختم", opt_ends_3days:"3 ڏينهن ۾ ختم",
+    opt_ends_7days:"7 ڏينهن ۾ ختم", btn_save_offer:"آفر سانڍيو",
+    modal_select_payment:"ادائيگي جو طريقو چونڊيو", pay_bank_short:"بينڪ", pay_card_short:"ڪارڊ", pay_split:"ورهايو",
+    lbl_total_payable:"ڪل ادا ڪرڻ جوڳي رقم", btn_confirm_receipt:"تصديق ڪريو ۽ رسيد ٺاهيو",
+    btn_print:"پرنٽ", btn_download_pdf:"PDF ڊائون لوڊ ڪريو",
+  },
+};
+
+let currentLang = 'en';
+
+function applyLanguage(lang){
+  if(!TRANSLATIONS[lang]) lang = 'en';
+  const dict = TRANSLATIONS[lang];
+  const enDict = TRANSLATIONS.en;
+  $$('[data-i18n]').forEach(el=>{
+    const key = el.dataset.i18n;
+    el.textContent = dict[key] || enDict[key] || el.textContent;
+  });
+  $$('[data-i18n-placeholder]').forEach(el=>{
+    const key = el.dataset.i18nPlaceholder;
+    el.placeholder = dict[key] || enDict[key] || el.placeholder;
+  });
+  currentLang = lang;
+  try{ localStorage.setItem('mirchi365-lang', lang); }catch(e){}
+  const order = ['en','ur','sd'];
+  const sel = $('#langSelect');
+  if(sel) sel.selectedIndex = order.indexOf(lang);
+  // Re-render JS-generated content that includes translatable strings
+  if(typeof renderCart === 'function') renderCart();
+}
+
+$('#langSelect').addEventListener('change', e=>{
+  const order = ['en','ur','sd'];
+  applyLanguage(order[e.target.selectedIndex] || 'en');
+  toast('Language updated', 'success');
+});
+
+function applySavedLanguage(){
+  let saved = null;
+  try{ saved = localStorage.getItem('mirchi365-lang'); }catch(e){}
+  applyLanguage(saved || 'en');
+}
+applySavedLanguage();

@@ -41,7 +41,7 @@ body.light{
   --muted-2: #8c8c96;
 }
 
-*{ margin:0; padding:0; box-sizing:border-box; }
+*{ margin:0; padding:0; box-sizing:border-box; overflow-wrap:break-word; }
 
 ::-webkit-scrollbar{ width:9px; height:9px; }
 ::-webkit-scrollbar-track{ background:transparent; }
@@ -50,6 +50,21 @@ body.light{
 *{ scrollbar-width: thin; scrollbar-color: var(--yellow) transparent; }
 
 html,body{ height:100%; }
+@supports (height: 100dvh){ body{ min-height:100dvh; } }
+
+.page-head h2{ font-size: clamp(18px, 4.5vw, 22px); }
+.login-brand h1{ font-size: clamp(20px, 6vw, 26px); }
+.stat-card h3{ font-size: clamp(14px, 3.5vw, 19px); }
+
+/* Respect notches / safe areas on modern phones */
+.topbar{ padding-left: max(14px, env(safe-area-inset-left)); padding-right: max(14px, env(safe-area-inset-right)); }
+.content{ padding-left: max(18px, env(safe-area-inset-left)); padding-right: max(18px, env(safe-area-inset-right)); padding-bottom: max(60px, env(safe-area-inset-bottom)); }
+.back-to-top{ bottom: max(24px, env(safe-area-inset-bottom)); }
+html{ overflow-x:hidden; -webkit-text-size-adjust:100%; text-size-adjust:100%; }
+
+/* Lock background scroll while any modal is open (supported in all modern
+   mobile browsers) so the page underneath never scrolls behind the dialog */
+body:has(.modal-overlay:not(.hidden)){ overflow:hidden; height:100vh; }
 
 body{
   font-family: var(--font-body);
@@ -57,15 +72,33 @@ body{
   color: var(--white);
   min-height:100vh;
   overflow-x:hidden;
+  width:100%;
+  -webkit-tap-highlight-color: transparent;
   transition: background .4s var(--ease), color .4s var(--ease);
 }
 body.light{
   background: radial-gradient(ellipse at top left, #ffffff 0%, var(--black) 55%);
 }
 
+/* Safe-area padding so content clears notches/home-indicators on any phone */
+.topbar{ padding-left: max(14px, env(safe-area-inset-left)); padding-right: max(14px, env(safe-area-inset-right)); }
+.content{ padding-left: max(18px, env(safe-area-inset-left)); padding-right: max(18px, env(safe-area-inset-right)); }
+.sidebar{ padding-left: max(14px, env(safe-area-inset-left)); }
+.back-to-top{ margin-bottom: env(safe-area-inset-bottom); }
+
+/* Buttons/links feel native and snappy on touch devices */
+button, a, input, select{ touch-action: manipulation; }
+
+/* iOS zooms the page in if a focused input's font-size is under 16px — keep all
+   form fields at 16px on touch-sized screens so the layout never jumps */
+@media (max-width:800px){
+  input, select, textarea{ font-size:16px !important; }
+}
+
 .hidden{ display:none !important; }
 a{ text-decoration:none; color:inherit; }
-button{ font-family:inherit; cursor:pointer; border:none; background:none; color:inherit; }
+button{ font-family:inherit; cursor:pointer; border:none; background:none; color:inherit; touch-action: manipulation; }
+.btn-primary, .btn-secondary, .icon-btn, .ot-btn, .pay-opt, .add-btn{ min-height:40px; }
 input,select{ font-family:inherit; }
 
 .glass{
@@ -378,7 +411,7 @@ body.view-only .view-only-only{ display:inline-block; }
 /* ==========================================================================
    STAT CARDS / DASHBOARD
    ========================================================================== */
-.stat-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:20px; }
+.stat-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:16px; margin-bottom:20px; }
 .stat-card{ display:flex; align-items:center; gap:14px; padding:18px; transition: transform .25s var(--ease); }
 .stat-card:hover{ transform: translateY(-4px); }
 .stat-icon{
@@ -391,7 +424,7 @@ body.view-only .view-only-only{ display:inline-block; }
 .stat-card small{ color:var(--muted); font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; }
 .stat-card h3{ font-family:var(--font-display); font-size:19px; margin-top:2px; }
 
-.dash-grid{ display:grid; grid-template-columns:1.4fr 1fr; gap:16px; margin-bottom:16px; }
+.dash-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:16px; margin-bottom:16px; }
 .panel{ padding:20px; }
 .panel-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
 .panel-head h3{ font-family:var(--font-display); font-size:15px; }
@@ -417,7 +450,7 @@ body.view-only .view-only-only{ display:inline-block; }
 .cat-tab:hover{ color:var(--white); }
 .cat-tab.active{ background: linear-gradient(120deg,var(--yellow),var(--red)); color:#140b0b; border-color:transparent; }
 
-.menu-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); gap:14px; }
+.menu-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(135px,1fr)); gap:14px; }
 .food-card{
   position:relative; padding:14px; cursor:pointer;
   transition: transform .25s var(--ease), border-color .25s;
@@ -501,7 +534,7 @@ body.view-only .view-only-only{ display:inline-block; }
 /* ==========================================================================
    KOT BOARD
    ========================================================================== */
-.kot-board{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+.kot-board{ display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:14px; }
 .kot-col h4{ display:flex; align-items:center; gap:8px; font-size:13px; color:var(--muted); margin-bottom:12px; text-transform:uppercase; letter-spacing:.03em; }
 .dot-status{ width:9px; height:9px; border-radius:50%; }
 .dot-status.red{ background:var(--red-2); box-shadow:0 0 8px var(--red-2); }
@@ -552,7 +585,7 @@ body.view-only .view-only-only{ display:inline-block; }
 /* ==========================================================================
    PAYMENTS
    ========================================================================== */
-.pay-methods-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:20px; }
+.pay-methods-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:14px; margin-bottom:20px; }
 .pay-card{ padding:20px; text-align:center; position:relative; }
 .pay-card i{ font-size:26px; color:var(--yellow); margin-bottom:10px; }
 .pay-card h4{ font-family:var(--font-display); margin-bottom:4px; }
@@ -569,7 +602,7 @@ body.view-only .view-only-only{ display:inline-block; }
 /* ==========================================================================
    OFFERS
    ========================================================================== */
-.offer-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+.offer-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:16px; }
 .offer-card{ padding:22px; position:relative; overflow:hidden; }
 .offer-tag{
   display:inline-block; font-size:10.5px; font-weight:800; padding:4px 10px; border-radius:20px;
@@ -587,8 +620,8 @@ body.view-only .view-only-only{ display:inline-block; }
 /* ==========================================================================
    SETTINGS
    ========================================================================== */
-.settings-grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:18px; }
-.form-grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.settings-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:16px; margin-bottom:18px; }
+.form-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px; }
 .form-grid .field.full{ grid-column:1/-1; }
 .form-grid input, .form-grid select{
   width:100%; background:var(--glass-strong); border:1px solid var(--glass-border); border-radius:9px;
@@ -621,7 +654,7 @@ body.view-only .view-only-only{ display:inline-block; }
 .modal .field input{ width:100%; background:var(--glass-strong); border:1px solid var(--glass-border); border-radius:9px; padding:10px 12px; color:var(--white); outline:none; }
 .modal .field input:focus{ border-color:var(--yellow); }
 
-.checkout-modal .pay-select-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:18px; }
+.checkout-modal .pay-select-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(90px,1fr)); gap:10px; margin-bottom:18px; }
 .pay-opt{
   padding:14px 6px; border-radius:12px; background:var(--glass-strong); border:1px solid transparent;
   display:flex; flex-direction:column; align-items:center; gap:8px; font-size:11.5px; font-weight:600; color:var(--muted);
@@ -684,15 +717,6 @@ body.view-only .view-only-only{ display:inline-block; }
 @media (max-width:1180px){
   .order-layout{ grid-template-columns:1fr; }
   .cart-col{ position:static; max-height:none; margin-top:4px; }
-  .dash-grid{ grid-template-columns:1fr; }
-  .settings-grid{ grid-template-columns:1fr; }
-  .pay-methods-grid{ grid-template-columns:repeat(2,1fr); }
-  .offer-grid{ grid-template-columns:1fr 1fr; }
-}
-@media (max-width:940px){
-  .stat-grid{ grid-template-columns:repeat(2,1fr); }
-  .kot-board{ grid-template-columns:repeat(2,1fr); gap:14px; overflow-x:visible; }
-  .menu-grid{ grid-template-columns:repeat(3,1fr); }
 }
 
 /* ---- Mobile phones (portrait & landscape) ---- */
@@ -711,9 +735,6 @@ body.view-only .view-only-only{ display:inline-block; }
   .topbar-right{ gap:6px; }
   .content{ padding:16px 12px 76px; }
 
-  .offer-grid{ grid-template-columns:1fr; }
-  .pay-methods-grid{ grid-template-columns:1fr; }
-  .kot-board{ grid-template-columns:1fr 1fr; }
   .page-head{ flex-direction:column; align-items:flex-start; gap:10px; }
   .search-wrap{ width:100%; }
   .icon-btn, .add-btn, .btn-primary, .btn-secondary, .nav-item, .cat-tab, .pay-opt, .qty-control button{ min-height:38px; }
@@ -721,7 +742,7 @@ body.view-only .view-only-only{ display:inline-block; }
   /* -- New Order page -- */
   .order-layout{ gap:14px; }
   .menu-col .page-head{ margin-bottom:12px; }
-  .menu-grid{ grid-template-columns:repeat(2,1fr); gap:10px; }
+  .menu-grid{ gap:10px; }
   .food-card{ padding:12px; }
   .food-img{ height:78px; font-size:26px; }
   .food-card h4{ font-size:12.5px; }
@@ -737,24 +758,17 @@ body.view-only .view-only-only{ display:inline-block; }
   .cart-item{ padding:8px; gap:8px; }
   .sum-row{ font-size:12px; }
   .sum-row.grand b{ font-size:16px; }
-  .checkout-modal .pay-select-grid{ grid-template-columns:repeat(3,1fr); }
 }
 
 @media (max-width:640px){
-  .stat-grid{ grid-template-columns:1fr 1fr; }
-  .kot-board{ grid-template-columns:1fr; }
   .dash-grid{ gap:12px; }
-  .pay-select-grid{ grid-template-columns:repeat(2,1fr) !important; }
 }
 
 @media (max-width:520px){
-  .stat-grid{ grid-template-columns:1fr 1fr; gap:10px; }
   .stat-card{ padding:14px; gap:10px; }
   .stat-card h3{ font-size:16px; }
-  .form-grid{ grid-template-columns:1fr; }
   .login-card{ padding:30px 22px; }
   .modal{ padding:20px; }
-  .checkout-modal .pay-select-grid{ grid-template-columns:repeat(2,1fr); }
   .receipt-modal{ width:100%; }
   .back-to-top{ bottom:16px; left:16px; width:40px; height:40px; }
   .content{ padding:14px 10px 76px; }
@@ -767,15 +781,12 @@ body.view-only .view-only-only{ display:inline-block; }
   .icon-btn{ width:34px; height:34px; font-size:13px; }
   .avatar{ width:28px; height:28px; font-size:12px; }
   .mobile-only{ font-size:13px; }
-  .menu-grid{ grid-template-columns:1fr 1fr; gap:8px; }
-  .stat-grid{ grid-template-columns:1fr; }
   .cat-tab{ padding:7px 12px; font-size:11.5px; }
   .food-img{ height:70px; font-size:22px; }
   .login-brand h1{ font-size:22px; }
   .order-type-tabs{ gap:5px; }
   .ot-btn i{ font-size:13px; }
 }
-
 .abcd{
   color: black;
 }

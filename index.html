@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Mirchi 365 | Restaurant POS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
@@ -33,12 +33,12 @@
     <div class="login-brand">
       <div class="brand-mark"><i class="fa-solid fa-pepper-hot"></i></div>
       <h1>MIRCHI <span>365</span></h1>
-      <p class="tagline">Spice that never stops</p>
+      <p class="tagline" data-i18n="login_tagline">Spice that never stops</p>
     </div>
 
     <form id="loginForm" class="login-form">
       <div class="field">
-        <label>Username</label>
+        <label data-i18n="lbl_username">Username</label>
         <div class="input-wrap">
           <i class="fa-solid fa-user"></i>
           <input type="text" id="username" placeholder="admin" autocomplete="username" required>
@@ -46,7 +46,7 @@
       </div>
 
       <div class="field">
-        <label>Password</label>
+        <label data-i18n="lbl_password">Password</label>
         <div class="input-wrap">
           <i class="fa-solid fa-lock"></i>
           <input type="password" id="password" placeholder="••••••" autocomplete="current-password" required>
@@ -56,19 +56,19 @@
 
       <div class="login-row">
         <label class="checkbox">
-          <input type="checkbox" id="rememberMe"><span>Remember me</span>
+          <input type="checkbox" id="rememberMe"><span data-i18n="lbl_remember_me">Remember me</span>
         </label>
-        <a href="#" id="forgotLink" class="link-muted">Forgot password?</a>
+        <a href="#" id="forgotLink" class="link-muted" data-i18n="lbl_forgot_password">Forgot password?</a>
       </div>
 
       <p class="login-error" id="loginError">Invalid username or password</p>
 
       <button type="submit" class="btn-primary full">
-        <span>Login</span><i class="fa-solid fa-arrow-right-to-bracket"></i>
+        <span data-i18n="btn_login">Login</span><i class="fa-solid fa-arrow-right-to-bracket"></i>
       </button>
 
       <div class="demo-hint">
-        logins for preview — &nbsp;•&nbsp; <b>admin</b> / <b>123456</b> (view only)
+        Demo logins - &nbsp;•&nbsp; <b>admin</b> / <b>123456</b> (view only)
       </div>
     </form>
   </div>
@@ -77,10 +77,10 @@
   <div id="forgotPanel" class="forgot-panel glass hidden">
     <button class="icon-btn-inline close-forgot" id="closeForgot"><i class="fa-solid fa-xmark"></i></button>
     <i class="fa-solid fa-key forgot-icon"></i>
-    <h3>Reset access</h3>
-    <p>Enter your registered phone number and the shift manager will issue a temporary PIN.</p>
+    <h3 data-i18n="forgot_title">Reset access</h3>
+    <p data-i18n="forgot_desc">Enter your registered phone number and the shift manager will issue a temporary PIN.</p>
     <div class="input-wrap"><i class="fa-solid fa-phone"></i><input type="text" placeholder="03XX-XXXXXXX"></div>
-    <button class="btn-secondary full" id="sendResetBtn">Send request</button>
+    <button class="btn-secondary full" id="sendResetBtn" data-i18n="btn_send_request">Send request</button>
   </div>
 </div>
 
@@ -95,18 +95,18 @@
       <button class="icon-btn sidebar-collapse-btn" id="sidebarCollapseBtn" title="Collapse menu"><i class="fa-solid fa-bars"></i></button>
     </div>
     <nav class="side-nav">
-      <a href="#" class="nav-item active" data-page="dashboard"><i class="fa-solid fa-chart-simple"></i><span>Dashboard</span></a>
-      <a href="#" class="nav-item" data-page="neworder"><i class="fa-solid fa-cart-plus"></i><span>New Order</span></a>
-      <a href="#" class="nav-item" data-page="kitchen"><i class="fa-solid fa-kitchen-set"></i><span>Kitchen Orders</span><span class="nav-badge" id="kotBadge">0</span></a>
-      <a href="#" class="nav-item" data-page="menu"><i class="fa-solid fa-book-open"></i><span>Menu</span></a>
-      <a href="#" class="nav-item" data-page="customers"><i class="fa-solid fa-users"></i><span>Customers</span></a>
-      <a href="#" class="nav-item" data-page="payments"><i class="fa-solid fa-wallet"></i><span>Payments</span></a>
-      <a href="#" class="nav-item" data-page="inventory"><i class="fa-solid fa-boxes-stacked"></i><span>Inventory</span></a>
-      <a href="#" class="nav-item" data-page="reports"><i class="fa-solid fa-chart-line"></i><span>Reports</span></a>
-      <a href="#" class="nav-item" data-page="offers"><i class="fa-solid fa-tags"></i><span>Offers</span></a>
-      <a href="#" class="nav-item" data-page="settings"><i class="fa-solid fa-gear"></i><span>Settings</span></a>
+      <a href="#" class="nav-item active" data-page="dashboard"><i class="fa-solid fa-chart-simple"></i><span data-i18n="nav_dashboard">Dashboard</span></a>
+      <a href="#" class="nav-item" data-page="neworder"><i class="fa-solid fa-cart-plus"></i><span data-i18n="nav_neworder">New Order</span></a>
+      <a href="#" class="nav-item" data-page="kitchen"><i class="fa-solid fa-kitchen-set"></i><span data-i18n="nav_kitchen">Kitchen Orders</span><span class="nav-badge" id="kotBadge">0</span></a>
+      <a href="#" class="nav-item" data-page="menu"><i class="fa-solid fa-book-open"></i><span data-i18n="nav_menu">Menu</span></a>
+      <a href="#" class="nav-item" data-page="customers"><i class="fa-solid fa-users"></i><span data-i18n="nav_customers">Customers</span></a>
+      <a href="#" class="nav-item" data-page="payments"><i class="fa-solid fa-wallet"></i><span data-i18n="nav_payments">Payments</span></a>
+      <a href="#" class="nav-item" data-page="inventory"><i class="fa-solid fa-boxes-stacked"></i><span data-i18n="nav_inventory">Inventory</span></a>
+      <a href="#" class="nav-item" data-page="reports"><i class="fa-solid fa-chart-line"></i><span data-i18n="nav_reports">Reports</span></a>
+      <a href="#" class="nav-item" data-page="offers"><i class="fa-solid fa-tags"></i><span data-i18n="nav_offers">Offers</span></a>
+      <a href="#" class="nav-item" data-page="settings"><i class="fa-solid fa-gear"></i><span data-i18n="nav_settings">Settings</span></a>
     </nav>
-    <button class="logout-btn" id="logoutBtn"><i class="fa-solid fa-power-off"></i><span>Logout</span></button>
+    <button class="logout-btn" id="logoutBtn"><i class="fa-solid fa-power-off"></i><span data-i18n="nav_logout">Logout</span></button>
   </aside>
 
   <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
@@ -128,12 +128,12 @@
       </div>
 
       <div class="topbar-right">
-        <span class="role-badge hidden" id="roleBadge"><i class="fa-solid fa-eye"></i> View Only</span>
+        <span class="role-badge hidden" id="roleBadge"><i class="fa-solid fa-eye"></i> <span data-i18n="role_view_only">View Only</span></span>
         <button class="icon-btn" id="darkToggle" title="Toggle theme"><i class="fa-solid fa-moon"></i></button>
         <div class="notif-wrap">
           <button class="icon-btn" id="notifBtn"><i class="fa-solid fa-bell"></i><span class="badge-dot" id="notifDot"></span></button>
           <div class="notif-dropdown hidden" id="notifDropdown">
-            <div class="notif-head">Notifications</div>
+            <div class="notif-head" data-i18n="notifications">Notifications</div>
             <div id="notifList" class="notif-list"></div>
           </div>
         </div>
@@ -146,9 +146,9 @@
             <i class="fa-solid fa-chevron-down mobile-hide"></i>
           </button>
           <div class="profile-dropdown hidden" id="profileDropdown">
-            <a href="#" id="myProfileLink"><i class="fa-solid fa-user"></i> My Profile</a>
-            <a href="#" data-page="settings"><i class="fa-solid fa-gear"></i> Settings</a>
-            <a href="#" id="profileLogout"><i class="fa-solid fa-power-off"></i> Logout</a>
+            <a href="#" id="myProfileLink"><i class="fa-solid fa-user"></i> <span data-i18n="my_profile">My Profile</span></a>
+            <a href="#" data-page="settings"><i class="fa-solid fa-gear"></i> <span data-i18n="nav_settings">Settings</span></a>
+            <a href="#" id="profileLogout"><i class="fa-solid fa-power-off"></i> <span data-i18n="nav_logout">Logout</span></a>
           </div>
         </div>
       </div>
@@ -160,27 +160,27 @@
       <!-- ===================== DASHBOARD ===================== -->
       <section class="page active" id="page-dashboard">
         <div class="page-head">
-          <div><h2>Dashboard</h2><p class="muted">Welcome back — here's how Mirchi 365 is doing today.</p></div>
+          <div><h2 data-i18n="page_dashboard_title">Dashboard</h2><p class="muted" data-i18n="dash_subtitle">Welcome back — here's how Mirchi 365 is doing today.</p></div>
         </div>
 
         <div class="stat-grid">
-          <div class="stat-card glass"><div class="stat-icon yellow"><i class="fa-solid fa-sack-dollar"></i></div><div><small>Today's Sales</small><h3 data-counter="0" data-prefix="Rs ">Rs 0</h3></div></div>
-          <div class="stat-card glass"><div class="stat-icon red"><i class="fa-solid fa-receipt"></i></div><div><small>Today's Orders</small><h3 data-counter="0">0</h3></div></div>
-          <div class="stat-card glass"><div class="stat-icon white"><i class="fa-solid fa-users"></i></div><div><small>Customers</small><h3 data-counter="0">0</h3></div></div>
-          <div class="stat-card glass"><div class="stat-icon yellow"><i class="fa-solid fa-hourglass-half"></i></div><div><small>Pending Orders</small><h3 data-counter="0">0</h3></div></div>
-          <div class="stat-card glass"><div class="stat-icon red"><i class="fa-solid fa-circle-check"></i></div><div><small>Completed Orders</small><h3 data-counter="0">0</h3></div></div>
-          <div class="stat-card glass"><div class="stat-icon white"><i class="fa-solid fa-chart-pie"></i></div><div><small>Monthly Revenue</small><h3 data-counter="0" data-prefix="Rs ">Rs 0</h3></div></div>
-          <div class="stat-card glass"><div class="stat-icon yellow"><i class="fa-solid fa-crown"></i></div><div><small>Best Seller</small><h3 id="bestSeller">—</h3></div></div>
-          <div class="stat-card glass"><div class="stat-icon red"><i class="fa-solid fa-triangle-exclamation"></i></div><div><small>Low Stock Alerts</small><h3 data-counter="0" id="lowStockCount">0</h3></div></div>
+          <div class="stat-card glass"><div class="stat-icon yellow"><i class="fa-solid fa-sack-dollar"></i></div><div><small data-i18n="stat_today_sales">Today's Sales</small><h3 data-counter="0" data-prefix="Rs ">Rs 0</h3></div></div>
+          <div class="stat-card glass"><div class="stat-icon red"><i class="fa-solid fa-receipt"></i></div><div><small data-i18n="stat_today_orders">Today's Orders</small><h3 data-counter="0">0</h3></div></div>
+          <div class="stat-card glass"><div class="stat-icon white"><i class="fa-solid fa-users"></i></div><div><small data-i18n="stat_customers">Customers</small><h3 data-counter="0">0</h3></div></div>
+          <div class="stat-card glass"><div class="stat-icon yellow"><i class="fa-solid fa-hourglass-half"></i></div><div><small data-i18n="stat_pending_orders">Pending Orders</small><h3 data-counter="0">0</h3></div></div>
+          <div class="stat-card glass"><div class="stat-icon red"><i class="fa-solid fa-circle-check"></i></div><div><small data-i18n="stat_completed_orders">Completed Orders</small><h3 data-counter="0">0</h3></div></div>
+          <div class="stat-card glass"><div class="stat-icon white"><i class="fa-solid fa-chart-pie"></i></div><div><small data-i18n="stat_monthly_revenue">Monthly Revenue</small><h3 data-counter="0" data-prefix="Rs ">Rs 0</h3></div></div>
+          <div class="stat-card glass"><div class="stat-icon yellow"><i class="fa-solid fa-crown"></i></div><div><small data-i18n="stat_best_seller">Best Seller</small><h3 id="bestSeller">—</h3></div></div>
+          <div class="stat-card glass"><div class="stat-icon red"><i class="fa-solid fa-triangle-exclamation"></i></div><div><small data-i18n="stat_low_stock">Low Stock Alerts</small><h3 data-counter="0" id="lowStockCount">0</h3></div></div>
         </div>
 
         <div class="dash-grid">
           <div class="panel glass">
-            <div class="panel-head"><h3>Revenue this week</h3></div>
+            <div class="panel-head"><h3 data-i18n="panel_revenue_week">Revenue this week</h3></div>
             <canvas id="revenueChart" height="220"></canvas>
           </div>
           <div class="panel glass">
-            <div class="panel-head"><h3>Live Kitchen Queue</h3><a href="#" class="link-muted" data-page="kitchen">View all</a></div>
+            <div class="panel-head"><h3 data-i18n="panel_live_kitchen">Live Kitchen Queue</h3><a href="#" class="link-muted" data-page="kitchen" data-i18n="link_view_all">View all</a></div>
             <div id="dashKot" class="mini-kot-list"></div>
           </div>
         </div>
@@ -191,10 +191,10 @@
         <div class="order-layout">
           <div class="menu-col">
             <div class="page-head">
-              <div><h2>New Order</h2><p class="muted">Token <b id="tokenPreview">#—</b></p></div>
+              <div><h2 data-i18n="page_neworder_title">New Order</h2><p class="muted"><span data-i18n="token_label">Token</span> <b id="tokenPreview">#—</b></p></div>
               <div class="search-wrap">
                 <i class="fa-solid fa-magnifying-glass"></i>
-                <input type="text" id="menuSearch" placeholder="Search menu…">
+                <input type="text" id="menuSearch" placeholder="Search menu…" data-i18n-placeholder="ph_search_menu">
               </div>
             </div>
             <div class="cat-tabs" id="catTabs"></div>
@@ -203,67 +203,70 @@
 
           <div class="cart-col glass">
             <div class="cart-head">
-              <h3><i class="fa-solid fa-cart-shopping"></i> Cart</h3>
-              <button class="link-muted edit-only" id="clearCartBtn"><i class="fa-solid fa-trash"></i> Clear</button>
+              <h3><i class="fa-solid fa-cart-shopping"></i> <span data-i18n="cart_label">Cart</span></h3>
+              <button class="link-muted edit-only" id="clearCartBtn"><i class="fa-solid fa-trash"></i> <span data-i18n="clear_label">Clear</span></button>
             </div>
 
             <div class="order-type-tabs">
-              <button class="ot-btn active" data-type="Dine In"><i class="fa-solid fa-utensils"></i> Dine In</button>
-              <button class="ot-btn" data-type="Take Away"><i class="fa-solid fa-bag-shopping"></i> Take Away</button>
-              <button class="ot-btn" data-type="Home Delivery"><i class="fa-solid fa-motorcycle"></i> Delivery</button>
+              <button class="ot-btn active" data-type="Dine In"><i class="fa-solid fa-utensils"></i> <span data-i18n="dine_in">Dine In</span></button>
+              <button class="ot-btn" data-type="Take Away"><i class="fa-solid fa-bag-shopping"></i> <span data-i18n="take_away">Take Away</span></button>
+              <button class="ot-btn" data-type="Home Delivery"><i class="fa-solid fa-motorcycle"></i> <span data-i18n="delivery_label">Delivery</span></button>
             </div>
 
             <div class="cust-fields" id="custFields">
-              <input type="text" id="custName" placeholder="Customer name">
-              <input type="text" id="custPhone" placeholder="Phone number">
-              <input type="text" id="custAddress" placeholder="Address" class="hidden-field">
-              <input type="text" id="custTable" placeholder="Table number">
+              <input type="text" id="custName" placeholder="Customer name" data-i18n-placeholder="ph_cust_name">
+              <input type="text" id="custPhone" placeholder="Phone number" data-i18n-placeholder="ph_cust_phone">
+              <input type="text" id="custAddress" placeholder="Address" data-i18n-placeholder="ph_cust_address" class="hidden-field">
+              <input type="text" id="custTable" placeholder="Table number" data-i18n-placeholder="ph_cust_table">
             </div>
 
             <div class="cart-items" id="cartItems">
-              <div class="empty-cart"><i class="fa-solid fa-basket-shopping"></i><p>Cart is empty — add something spicy!</p></div>
+              <div class="empty-cart"><i class="fa-solid fa-basket-shopping"></i><p data-i18n="cart_empty">Cart is empty — add something spicy!</p></div>
             </div>
 
             <div class="cart-summary">
-              <div class="sum-row"><span>Subtotal</span><b id="sumSubtotal">Rs 0</b></div>
+              <div class="sum-row"><span data-i18n="subtotal_label">Subtotal</span><b id="sumSubtotal">Rs 0</b></div>
               <div class="sum-row edit-row">
-                <span>Discount</span>
+                <span data-i18n="discount_label">Discount</span>
                 <div class="mini-input"><input type="number" id="discountInput" value="0" min="0"><select id="discountType"><option class="abcd" value="pct">%</option><option class="abcd" value="flat">Rs</option></select></div>
               </div>
               <div class="sum-row"><span>GST (<span id="gstPctLabel">5</span>%)</span><b id="sumGst">Rs 0</b></div>
-              <div class="sum-row"><span>Service Charges</span><b id="sumService">Rs 0</b></div>
+              <div class="sum-row"><span data-i18n="service_charges_label">Service Charges</span><b id="sumService">Rs 0</b></div>
               <div class="sum-row edit-row">
-                <span>Delivery Charges</span>
+                <span data-i18n="delivery_charges_label">Delivery Charges</span>
                 <div class="mini-input"><input type="number" id="deliveryInput" value="0" min="0"></div>
               </div>
-              <div class="sum-row grand"><span>Grand Total</span><b id="sumGrand">Rs 0</b></div>
+              <div class="sum-row grand"><span data-i18n="grand_total_label">Grand Total</span><b id="sumGrand">Rs 0</b></div>
             </div>
 
-            <button class="btn-primary full lg edit-only" id="checkoutBtn"><i class="fa-solid fa-bolt"></i> Checkout</button>
+            <button class="btn-primary full lg edit-only" id="checkoutBtn"><i class="fa-solid fa-bolt"></i> <span data-i18n="checkout_label">Checkout</span></button>
           </div>
         </div>
       </section>
 
       <!-- ===================== KITCHEN ===================== -->
       <section class="page" id="page-kitchen">
-        <div class="page-head"><div><h2>Kitchen Orders (KOT)</h2><p class="muted">Live order tickets for the kitchen team.</p></div></div>
+        <div class="page-head"><div><h2 data-i18n="page_kitchen_title">Kitchen Orders (KOT)</h2><p class="muted" data-i18n="kitchen_subtitle">Live order tickets for the kitchen team.</p></div></div>
         <div class="kot-board" id="kotBoard">
-          <div class="kot-col"><h4><span class="dot-status red"></span> Pending</h4><div class="kot-list" id="kotPending"></div></div>
-          <div class="kot-col"><h4><span class="dot-status yellow"></span> Preparing</h4><div class="kot-list" id="kotPreparing"></div></div>
-          <div class="kot-col"><h4><span class="dot-status green"></span> Ready</h4><div class="kot-list" id="kotReady"></div></div>
-          <div class="kot-col"><h4><span class="dot-status muted"></span> Delivered</h4><div class="kot-list" id="kotDelivered"></div></div>
+          <div class="kot-col"><h4><span class="dot-status red"></span> <span data-i18n="kot_status_pending">Pending</span></h4><div class="kot-list" id="kotPending"></div></div>
+          <div class="kot-col"><h4><span class="dot-status yellow"></span> <span data-i18n="kot_status_preparing">Preparing</span></h4><div class="kot-list" id="kotPreparing"></div></div>
+          <div class="kot-col"><h4><span class="dot-status green"></span> <span data-i18n="kot_status_ready">Ready</span></h4><div class="kot-list" id="kotReady"></div></div>
+          <div class="kot-col"><h4><span class="dot-status muted"></span> <span data-i18n="kot_status_delivered">Delivered</span></h4><div class="kot-list" id="kotDelivered"></div></div>
         </div>
       </section>
 
       <!-- ===================== MENU MANAGE ===================== -->
       <section class="page" id="page-menu">
-        <div class="page-head"><div><h2>Menu Management</h2><p class="muted">All food items across categories.</p></div>
-          <div class="search-wrap"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="menuMgSearch" placeholder="Search…"></div>
+        <div class="page-head"><div><h2 data-i18n="page_menu_title">Menu Management</h2><p class="muted" data-i18n="menu_subtitle">All food items across categories.</p></div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <div class="search-wrap"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="menuMgSearch" placeholder="Search…" data-i18n-placeholder="ph_search_generic"></div>
+            <button class="btn-primary edit-only" id="addMenuItemBtn"><i class="fa-solid fa-plus"></i> <span data-i18n="btn_add_item">Add Item</span></button>
+          </div>
         </div>
         <div class="cat-tabs" id="catTabsMg"></div>
         <div class="table-wrap glass">
           <table class="data-table" id="menuTable">
-            <thead><tr><th></th><th>Item</th><th>Category</th><th>Price</th><th>Stock</th><th></th></tr></thead>
+            <thead><tr><th></th><th data-i18n="th_item">Item</th><th data-i18n="th_category">Category</th><th data-i18n="th_price">Price</th><th data-i18n="th_stock">Stock</th><th></th></tr></thead>
             <tbody id="menuTableBody"></tbody>
           </table>
         </div>
@@ -272,12 +275,12 @@
       <!-- ===================== CUSTOMERS ===================== -->
       <section class="page" id="page-customers">
         <div class="page-head">
-          <div><h2>Customers</h2><p class="muted">Manage your guests and reward points.</p></div>
-          <button class="btn-primary edit-only" id="addCustomerBtn"><i class="fa-solid fa-plus"></i> Add Customer</button>
+          <div><h2 data-i18n="page_customers_title">Customers</h2><p class="muted" data-i18n="customers_subtitle">Manage your guests and reward points.</p></div>
+          <button class="btn-primary edit-only" id="addCustomerBtn"><i class="fa-solid fa-plus"></i> <span data-i18n="btn_add_customer">Add Customer</span></button>
         </div>
         <div class="table-wrap glass">
           <table class="data-table">
-            <thead><tr><th>Name</th><th>Phone</th><th>Orders</th><th>Total Spent</th><th>Reward Pts</th><th></th></tr></thead>
+            <thead><tr><th data-i18n="th_name">Name</th><th data-i18n="th_phone">Phone</th><th data-i18n="th_orders">Orders</th><th data-i18n="th_total_spent">Total Spent</th><th data-i18n="th_reward_pts">Reward Pts</th><th></th></tr></thead>
             <tbody id="customerTableBody"></tbody>
           </table>
         </div>
@@ -285,20 +288,20 @@
 
       <!-- ===================== PAYMENTS ===================== -->
       <section class="page" id="page-payments">
-        <div class="page-head"><div><h2>Payments</h2><p class="muted">Accepted methods & recent transactions.</p></div></div>
+        <div class="page-head"><div><h2 data-i18n="page_payments_title">Payments</h2><p class="muted" data-i18n="payments_subtitle">Accepted methods &amp; recent transactions.</p></div></div>
         <div class="pay-methods-grid">
-          <div class="pay-card glass"><i class="fa-solid fa-money-bill-wave"></i><h4>Cash</h4><p>Paid at counter</p></div>
-          <div class="pay-card glass"><i class="fa-solid fa-mobile-screen-button"></i><h4>Easypaisa</h4><p>0312-3515342</p><button class="copy-btn" data-copy="0312-3515342"><i class="fa-regular fa-copy"></i></button></div>
-          <div class="pay-card glass"><i class="fa-solid fa-mobile-screen-button"></i><h4>JazzCash</h4><p>0312-3515342</p><button class="copy-btn" data-copy="0312-3515342"><i class="fa-regular fa-copy"></i></button></div>
-          <div class="pay-card glass"><i class="fa-solid fa-building-columns"></i><h4>Bank Transfer</h4><p>HBL · Mirchi 365<br>1234567890</p><button class="copy-btn" data-copy="1234567890"><i class="fa-regular fa-copy"></i></button></div>
-          <div class="pay-card glass"><i class="fa-solid fa-credit-card"></i><h4>Card Payment</h4><p>Visa / Mastercard</p></div>
-          <div class="pay-card glass"><i class="fa-solid fa-qrcode"></i><h4>Scan QR</h4><div class="qr-placeholder"><i class="fa-solid fa-qrcode"></i></div></div>
+          <div class="pay-card glass"><i class="fa-solid fa-money-bill-wave"></i><h4 data-i18n="pay_cash">Cash</h4><p data-i18n="pay_cash_desc">Paid at counter</p></div>
+          <div class="pay-card glass"><i class="fa-solid fa-mobile-screen-button"></i><h4 data-i18n="pay_easypaisa">Easypaisa</h4><p>0312-3515342</p><button class="copy-btn" data-copy="0312-3515342"><i class="fa-regular fa-copy"></i></button></div>
+          <div class="pay-card glass"><i class="fa-solid fa-mobile-screen-button"></i><h4 data-i18n="pay_jazzcash">JazzCash</h4><p>0312-3515342</p><button class="copy-btn" data-copy="0312-3515342"><i class="fa-regular fa-copy"></i></button></div>
+          <div class="pay-card glass"><i class="fa-solid fa-building-columns"></i><h4 data-i18n="pay_bank">Bank Transfer</h4><p>HBL · Mirchi 365<br>1234567890</p><button class="copy-btn" data-copy="1234567890"><i class="fa-regular fa-copy"></i></button></div>
+          <div class="pay-card glass"><i class="fa-solid fa-credit-card"></i><h4 data-i18n="pay_card">Card Payment</h4><p data-i18n="pay_card_desc">Visa / Mastercard</p></div>
+          <div class="pay-card glass"><i class="fa-solid fa-qrcode"></i><h4 data-i18n="pay_qr">Scan QR</h4><div class="qr-placeholder"><i class="fa-solid fa-qrcode"></i></div></div>
         </div>
         <div class="panel glass">
-          <div class="panel-head"><h3>Recent Transactions</h3></div>
+          <div class="panel-head"><h3 data-i18n="panel_recent_transactions">Recent Transactions</h3></div>
           <div class="table-wrap">
             <table class="data-table">
-              <thead><tr><th>Token</th><th>Customer</th><th>Method</th><th>Amount</th><th>Status</th></tr></thead>
+              <thead><tr><th data-i18n="th_token">Token</th><th data-i18n="th_customer">Customer</th><th data-i18n="th_method">Method</th><th data-i18n="th_amount">Amount</th><th data-i18n="th_status">Status</th></tr></thead>
               <tbody id="paymentsTableBody"></tbody>
             </table>
           </div>
@@ -308,12 +311,12 @@
       <!-- ===================== INVENTORY ===================== -->
       <section class="page" id="page-inventory">
         <div class="page-head">
-          <div><h2>Inventory</h2><p class="muted">Track stock and ingredient levels.</p></div>
-          <button class="btn-primary edit-only" id="addStockBtn"><i class="fa-solid fa-plus"></i> Add Item</button>
+          <div><h2 data-i18n="page_inventory_title">Inventory</h2><p class="muted" data-i18n="inventory_subtitle">Track stock and ingredient levels.</p></div>
+          <button class="btn-primary edit-only" id="addStockBtn"><i class="fa-solid fa-plus"></i> <span data-i18n="btn_add_item">Add Item</span></button>
         </div>
         <div class="table-wrap glass">
           <table class="data-table">
-            <thead><tr><th>Ingredient</th><th>Stock</th><th>Unit</th><th>Supplier</th><th>Purchase Price</th><th>Selling Price</th><th>Status</th><th></th></tr></thead>
+            <thead><tr><th data-i18n="th_ingredient">Ingredient</th><th data-i18n="th_stock">Stock</th><th data-i18n="th_unit">Unit</th><th data-i18n="th_supplier">Supplier</th><th data-i18n="th_purchase_price">Purchase Price</th><th data-i18n="th_selling_price">Selling Price</th><th data-i18n="th_status">Status</th><th></th></tr></thead>
             <tbody id="inventoryTableBody"></tbody>
           </table>
         </div>
@@ -321,73 +324,73 @@
 
       <!-- ===================== REPORTS ===================== -->
       <section class="page" id="page-reports">
-        <div class="page-head"><div><h2>Reports</h2><p class="muted">Sales performance overview.</p></div>
+        <div class="page-head"><div><h2 data-i18n="page_reports_title">Reports</h2><p class="muted" data-i18n="reports_subtitle">Sales performance overview.</p></div>
           <div class="report-range">
-            <button class="range-btn active" data-range="today">Today</button>
-            <button class="range-btn" data-range="week">Weekly</button>
-            <button class="range-btn" data-range="month">Monthly</button>
-            <button class="range-btn" data-range="year">Yearly</button>
+            <button class="range-btn active" data-range="today" data-i18n="range_today">Today</button>
+            <button class="range-btn" data-range="week" data-i18n="range_weekly">Weekly</button>
+            <button class="range-btn" data-range="month" data-i18n="range_monthly">Monthly</button>
+            <button class="range-btn" data-range="year" data-i18n="range_yearly">Yearly</button>
           </div>
         </div>
         <div class="dash-grid">
-          <div class="panel glass"><div class="panel-head"><h3>Revenue Trend</h3></div><canvas id="reportChart" height="220"></canvas></div>
-          <div class="panel glass"><div class="panel-head"><h3>Top Selling Items</h3></div><div id="topItemsList" class="mini-kot-list"></div></div>
+          <div class="panel glass"><div class="panel-head"><h3 data-i18n="panel_revenue_trend">Revenue Trend</h3></div><canvas id="reportChart" height="220"></canvas></div>
+          <div class="panel glass"><div class="panel-head"><h3 data-i18n="panel_top_items">Top Selling Items</h3></div><div id="topItemsList" class="mini-kot-list"></div></div>
         </div>
         <div class="dash-grid">
-          <div class="panel glass"><div class="panel-head"><h3>Top Customers</h3></div><div id="topCustomersList" class="mini-kot-list"></div></div>
-          <div class="panel glass"><div class="panel-head"><h3>Payment Breakdown</h3></div><canvas id="paymentChart" height="220"></canvas></div>
+          <div class="panel glass"><div class="panel-head"><h3 data-i18n="panel_top_customers">Top Customers</h3></div><div id="topCustomersList" class="mini-kot-list"></div></div>
+          <div class="panel glass"><div class="panel-head"><h3 data-i18n="panel_payment_breakdown">Payment Breakdown</h3></div><canvas id="paymentChart" height="220"></canvas></div>
         </div>
       </section>
 
       <!-- ===================== OFFERS ===================== -->
       <section class="page" id="page-offers">
         <div class="page-head">
-          <div><h2>Offers & Discounts</h2><p class="muted">Deals and promo codes running today.</p></div>
-          <button class="btn-primary edit-only" id="addOfferBtn"><i class="fa-solid fa-plus"></i> Add Offer</button>
+          <div><h2 data-i18n="page_offers_title">Offers &amp; Discounts</h2><p class="muted" data-i18n="offers_subtitle">Deals and promo codes running today.</p></div>
+          <button class="btn-primary edit-only" id="addOfferBtn"><i class="fa-solid fa-plus"></i> <span data-i18n="btn_add_offer">Add Offer</span></button>
         </div>
         <div class="offer-grid" id="offerGrid"></div>
       </section>
 
       <!-- ===================== SETTINGS ===================== -->
       <section class="page" id="page-settings">
-        <div class="page-head"><div><h2>Settings</h2><p class="muted">Configure your restaurant profile.</p></div></div>
+        <div class="page-head"><div><h2 data-i18n="page_settings_title">Settings</h2><p class="muted" data-i18n="settings_subtitle">Configure your restaurant profile.</p></div></div>
         <div class="settings-grid">
           <div class="panel glass">
-            <div class="panel-head"><h3>Restaurant Profile</h3></div>
+            <div class="panel-head"><h3 data-i18n="panel_restaurant_profile">Restaurant Profile</h3></div>
             <div class="form-grid">
-              <div class="field"><label>Restaurant Name</label><input type="text" id="setName" value="Mirchi 365"></div>
-              <div class="field"><label>Phone 1</label><input type="text" id="setPhone1" value="0317-2889755"></div>
-              <div class="field"><label>Phone 2</label><input type="text" id="setPhone2" value="0317-3991274"></div>
-              <div class="field"><label>Phone 3</label><input type="text" id="setPhone3" value="0312-3515342"></div>
-              <div class="field full"><label>Address</label><input type="text" id="setAddress" value="National Highway Gambat, Near New Nadra"></div>
+              <div class="field"><label data-i18n="lbl_restaurant_name">Restaurant Name</label><input type="text" id="setName" value="Mirchi 365"></div>
+              <div class="field"><label data-i18n="lbl_phone1">Phone 1</label><input type="text" id="setPhone1" value="0317-2889755"></div>
+              <div class="field"><label data-i18n="lbl_phone2">Phone 2</label><input type="text" id="setPhone2" value="0317-3991274"></div>
+              <div class="field"><label data-i18n="lbl_phone3">Phone 3</label><input type="text" id="setPhone3" value="0312-3515342"></div>
+              <div class="field full"><label data-i18n="lbl_address">Address</label><input type="text" id="setAddress" value="National Highway Gambat, Near New Nadra"></div>
             </div>
           </div>
           <div class="panel glass">
-            <div class="panel-head"><h3>Billing</h3></div>
+            <div class="panel-head"><h3 data-i18n="panel_billing">Billing</h3></div>
             <div class="form-grid">
-              <div class="field"><label>Currency</label><input type="text" id="setCurrency" value="PKR (Rs)"></div>
-              <div class="field"><label>Tax %</label><input type="number" id="setTax" value="5"></div>
-              <div class="field"><label>Service Charge %</label><input type="number" id="setService" value="2"></div>
-              <div class="field"><label>Default Delivery Charges</label><input type="number" id="setDelivery" value="150"></div>
+              <div class="field"><label data-i18n="lbl_currency">Currency</label><input type="text" id="setCurrency" value="PKR (Rs)"></div>
+              <div class="field"><label data-i18n="lbl_tax">Tax %</label><input type="number" id="setTax" value="5"></div>
+              <div class="field"><label data-i18n="lbl_service_charge">Service Charge %</label><input type="number" id="setService" value="2"></div>
+              <div class="field"><label data-i18n="lbl_delivery_charges">Default Delivery Charges</label><input type="number" id="setDelivery" value="150"></div>
             </div>
           </div>
           <div class="panel glass">
-            <div class="panel-head"><h3>Preferences</h3></div>
-            <div class="pref-row"><span>Dark Mode</span><label class="switch"><input type="checkbox" id="settingsDark" checked><span class="slider"></span></label></div>
-            <div class="pref-row"><span>Language</span>
+            <div class="panel-head"><h3 data-i18n="panel_preferences">Preferences</h3></div>
+            <div class="pref-row"><span data-i18n="lbl_dark_mode">Dark Mode</span><label class="switch"><input type="checkbox" id="settingsDark" checked><span class="slider"></span></label></div>
+            <div class="pref-row"><span data-i18n="lbl_language">Language</span>
               <select id="langSelect"><option class="abcd">English</option><option class="abcd">اردو (Urdu)</option><option class="abcd">سنڌي (Sindhi)</option></select>
             </div>
-            <div class="pref-row"><span>Printer</span>
+            <div class="pref-row"><span data-i18n="lbl_printer">Printer</span>
               <select><option class="abcd">Thermal Printer — 80mm</option><option class="abcd">Thermal Printer — 58mm</option><option class="abcd">PDF Only</option></select>
             </div>
           </div>
         </div>
-        <button class="btn-primary edit-only" id="saveSettingsBtn"><i class="fa-solid fa-floppy-disk"></i> Save Settings</button>
+        <button class="btn-primary edit-only" id="saveSettingsBtn"><i class="fa-solid fa-floppy-disk"></i> <span data-i18n="btn_save_settings">Save Settings</span></button>
       </section>
 
       <!-- ===================== SITE FOOTER (shown at the end of every tab) ===================== -->
       <footer class="site-footer">
-        This website was made by <b>Mian Muhammad Dino.</b>
+        <span data-i18n="footer_credit">This website was made by</span> <b>Mian Muhammad Dino.</b>
       </footer>
 
     </main>
@@ -406,17 +409,17 @@
 <div class="modal-overlay hidden" id="checkoutModal">
   <div class="modal glass checkout-modal">
     <button class="modal-close" data-close="checkoutModal"><i class="fa-solid fa-xmark"></i></button>
-    <h3><i class="fa-solid fa-wallet"></i> Select Payment Method</h3>
+    <h3><i class="fa-solid fa-wallet"></i> <span data-i18n="modal_select_payment">Select Payment Method</span></h3>
     <div class="pay-select-grid">
-      <button class="pay-opt active" data-pay="Cash"><i class="fa-solid fa-money-bill-wave"></i>Cash</button>
-      <button class="pay-opt" data-pay="Easypaisa"><i class="fa-solid fa-mobile-screen-button"></i>Easypaisa</button>
-      <button class="pay-opt" data-pay="JazzCash"><i class="fa-solid fa-mobile-screen-button"></i>JazzCash</button>
-      <button class="pay-opt" data-pay="Bank Transfer"><i class="fa-solid fa-building-columns"></i>Bank</button>
-      <button class="pay-opt" data-pay="Card"><i class="fa-solid fa-credit-card"></i>Card</button>
-      <button class="pay-opt" data-pay="Split"><i class="fa-solid fa-code-compare"></i>Split</button>
+      <button class="pay-opt active" data-pay="Cash"><i class="fa-solid fa-money-bill-wave"></i><span data-i18n="pay_cash">Cash</span></button>
+      <button class="pay-opt" data-pay="Easypaisa"><i class="fa-solid fa-mobile-screen-button"></i><span data-i18n="pay_easypaisa">Easypaisa</span></button>
+      <button class="pay-opt" data-pay="JazzCash"><i class="fa-solid fa-mobile-screen-button"></i><span data-i18n="pay_jazzcash">JazzCash</span></button>
+      <button class="pay-opt" data-pay="Bank Transfer"><i class="fa-solid fa-building-columns"></i><span data-i18n="pay_bank_short">Bank</span></button>
+      <button class="pay-opt" data-pay="Card"><i class="fa-solid fa-credit-card"></i><span data-i18n="pay_card_short">Card</span></button>
+      <button class="pay-opt" data-pay="Split"><i class="fa-solid fa-code-compare"></i><span data-i18n="pay_split">Split</span></button>
     </div>
-    <div class="checkout-total">Total Payable <b id="checkoutTotal">Rs 0</b></div>
-    <button class="btn-primary full lg" id="confirmPaymentBtn"><i class="fa-solid fa-check"></i> Confirm & Generate Receipt</button>
+    <div class="checkout-total"><span data-i18n="lbl_total_payable">Total Payable</span> <b id="checkoutTotal">Rs 0</b></div>
+    <button class="btn-primary full lg" id="confirmPaymentBtn"><i class="fa-solid fa-check"></i> <span data-i18n="btn_confirm_receipt">Confirm &amp; Generate Receipt</span></button>
   </div>
 </div>
 
@@ -426,8 +429,8 @@
     <button class="modal-close" data-close="receiptModal"><i class="fa-solid fa-xmark"></i></button>
     <div id="receiptContent" class="receipt"></div>
     <div class="receipt-actions">
-      <button class="btn-secondary" id="printReceiptBtn"><i class="fa-solid fa-print"></i> Print</button>
-      <button class="btn-primary" id="downloadReceiptBtn"><i class="fa-solid fa-download"></i> Download PDF</button>
+      <button class="btn-secondary" id="printReceiptBtn"><i class="fa-solid fa-print"></i> <span data-i18n="btn_print">Print</span></button>
+      <button class="btn-primary" id="downloadReceiptBtn"><i class="fa-solid fa-download"></i> <span data-i18n="btn_download_pdf">Download PDF</span></button>
     </div>
   </div>
 </div>
@@ -436,12 +439,38 @@
 <div class="modal-overlay hidden" id="myProfileModal">
   <div class="modal glass">
     <button class="modal-close" data-close="myProfileModal"><i class="fa-solid fa-xmark"></i></button>
-    <h3><i class="fa-solid fa-user"></i> My Profile</h3>
-    <div class="field"><label>Full Name</label><input type="text" id="profFullName"></div>
-    <div class="field"><label>Phone Number</label><input type="text" id="profPhone"></div>
-    <div class="field"><label>Email</label><input type="email" id="profEmail"></div>
-    <div class="field"><label>Role</label><input type="text" id="profRole" disabled></div>
-    <button class="btn-primary full" id="saveProfileBtn"><i class="fa-solid fa-check"></i> Save Profile</button>
+    <h3><i class="fa-solid fa-user"></i> <span data-i18n="my_profile">My Profile</span></h3>
+    <div class="field"><label data-i18n="lbl_full_name">Full Name</label><input type="text" id="profFullName"></div>
+    <div class="field"><label data-i18n="lbl_phone_number">Phone Number</label><input type="text" id="profPhone"></div>
+    <div class="field"><label data-i18n="lbl_email">Email</label><input type="email" id="profEmail"></div>
+    <div class="field"><label data-i18n="lbl_role">Role</label><input type="text" id="profRole" disabled></div>
+    <button class="btn-primary full" id="saveProfileBtn"><i class="fa-solid fa-check"></i> <span data-i18n="btn_save_profile">Save Profile</span></button>
+  </div>
+</div>
+
+<!-- ========== ADD MENU ITEM MODAL ========== -->
+<div class="modal-overlay hidden" id="menuItemModal">
+  <div class="modal glass">
+    <button class="modal-close" data-close="menuItemModal"><i class="fa-solid fa-xmark"></i></button>
+    <h3><i class="fa-solid fa-utensils"></i> <span data-i18n="modal_add_menu_item">Add Menu Item</span></h3>
+    <div class="field"><label data-i18n="lbl_item_name">Item Name</label><input type="text" id="newItemName" placeholder="e.g. Chicken Seekh Kabab"></div>
+    <div class="form-grid">
+      <div class="field">
+        <label data-i18n="th_category">Category</label>
+        <input type="text" id="newItemCat" list="categoryList" placeholder="e.g. Pizza">
+        <datalist id="categoryList"></datalist>
+      </div>
+      <div class="field"><label data-i18n="th_price">Price</label><input type="number" id="newItemPrice" placeholder="500"></div>
+    </div>
+    <div class="field">
+      <label data-i18n="th_stock">Stock</label>
+      <select id="newItemStock">
+        <option class="abcd" value="in">In Stock</option>
+        <option class="abcd" value="low">Low Stock</option>
+        <option class="abcd" value="out">Out of Stock</option>
+      </select>
+    </div>
+    <button class="btn-primary full" id="saveMenuItemBtn"><i class="fa-solid fa-check"></i> <span data-i18n="btn_save_item">Save Item</span></button>
   </div>
 </div>
 
@@ -449,11 +478,11 @@
 <div class="modal-overlay hidden" id="customerModal">
   <div class="modal glass">
     <button class="modal-close" data-close="customerModal"><i class="fa-solid fa-xmark"></i></button>
-    <h3><i class="fa-solid fa-user-plus"></i> Add Customer</h3>
-    <div class="field"><label>Name</label><input type="text" id="newCustName"></div>
-    <div class="field"><label>Phone</label><input type="text" id="newCustPhone"></div>
-    <div class="field"><label>Address</label><input type="text" id="newCustAddress"></div>
-    <button class="btn-primary full" id="saveCustomerBtn"><i class="fa-solid fa-check"></i> Save Customer</button>
+    <h3><i class="fa-solid fa-user-plus"></i> <span data-i18n="btn_add_customer">Add Customer</span></h3>
+    <div class="field"><label data-i18n="lbl_name">Name</label><input type="text" id="newCustName"></div>
+    <div class="field"><label data-i18n="lbl_phone">Phone</label><input type="text" id="newCustPhone"></div>
+    <div class="field"><label data-i18n="lbl_address">Address</label><input type="text" id="newCustAddress"></div>
+    <button class="btn-primary full" id="saveCustomerBtn"><i class="fa-solid fa-check"></i> <span data-i18n="btn_save_customer">Save Customer</span></button>
   </div>
 </div>
 
@@ -461,16 +490,16 @@
 <div class="modal-overlay hidden" id="stockModal">
   <div class="modal glass">
     <button class="modal-close" data-close="stockModal"><i class="fa-solid fa-xmark"></i></button>
-    <h3><i class="fa-solid fa-boxes-stacked"></i> Add Inventory Item</h3>
-    <div class="field"><label>Ingredient Name</label><input type="text" id="newStockName"></div>
+    <h3><i class="fa-solid fa-boxes-stacked"></i> <span data-i18n="modal_add_inventory">Add Inventory Item</span></h3>
+    <div class="field"><label data-i18n="lbl_ingredient_name">Ingredient Name</label><input type="text" id="newStockName"></div>
     <div class="form-grid">
-      <div class="field"><label>Stock Qty</label><input type="number" id="newStockQty"></div>
-      <div class="field"><label>Unit</label><input type="text" id="newStockUnit" placeholder="kg / ltr / pcs"></div>
-      <div class="field"><label>Supplier</label><input type="text" id="newStockSupplier"></div>
-      <div class="field"><label>Purchase Price</label><input type="number" id="newStockPurchase"></div>
-      <div class="field"><label>Selling Price</label><input type="number" id="newStockSelling"></div>
+      <div class="field"><label data-i18n="lbl_stock_qty">Stock Qty</label><input type="number" id="newStockQty"></div>
+      <div class="field"><label data-i18n="lbl_unit">Unit</label><input type="text" id="newStockUnit" placeholder="kg / ltr / pcs"></div>
+      <div class="field"><label data-i18n="lbl_supplier">Supplier</label><input type="text" id="newStockSupplier"></div>
+      <div class="field"><label data-i18n="lbl_purchase_price">Purchase Price</label><input type="number" id="newStockPurchase"></div>
+      <div class="field"><label data-i18n="lbl_selling_price">Selling Price</label><input type="number" id="newStockSelling"></div>
     </div>
-    <button class="btn-primary full" id="saveStockBtn"><i class="fa-solid fa-check"></i> Save Item</button>
+    <button class="btn-primary full" id="saveStockBtn"><i class="fa-solid fa-check"></i> <span data-i18n="btn_save_item">Save Item</span></button>
   </div>
 </div>
 
@@ -478,31 +507,31 @@
 <div class="modal-overlay hidden" id="offerModal">
   <div class="modal glass">
     <button class="modal-close" data-close="offerModal"><i class="fa-solid fa-xmark"></i></button>
-    <h3><i class="fa-solid fa-tags"></i> Add New Offer</h3>
+    <h3><i class="fa-solid fa-tags"></i> <span data-i18n="modal_add_offer">Add New Offer</span></h3>
     <div class="field">
-      <label>Offer Type / Tag</label>
+      <label data-i18n="lbl_offer_type">Offer Type / Tag</label>
       <select id="newOfferTag">
-        <option value="">Custom Discount</option>
-        <option value="red">Birthday Package</option>
-        <option value="yellow">Promo Code</option>
+        <option value="" data-i18n="opt_custom_discount">Custom Discount</option>
+        <option value="red" data-i18n="opt_birthday_package">Birthday Package</option>
+        <option value="yellow" data-i18n="opt_promo_code">Promo Code</option>
       </select>
     </div>
-    <div class="field"><label>Title</label><input type="text" id="newOfferTitle" placeholder="e.g. Family Feast / MIRCHI15"></div>
-    <div class="field"><label>Description</label><input type="text" id="newOfferDesc" placeholder="e.g. 4 Burgers + 2 Pizza + 4 Drinks"></div>
+    <div class="field"><label data-i18n="lbl_title">Title</label><input type="text" id="newOfferTitle" placeholder="e.g. Family Feast / MIRCHI15"></div>
+    <div class="field"><label data-i18n="lbl_description">Description</label><input type="text" id="newOfferDesc" placeholder="e.g. 4 Burgers + 2 Pizza + 4 Drinks"></div>
     <div class="form-grid">
-      <div class="field"><label>Offer Price (Rs)</label><input type="number" id="newOfferPrice" placeholder="2999"></div>
-      <div class="field"><label>Original Price (optional)</label><input type="number" id="newOfferOldPrice" placeholder="4200"></div>
+      <div class="field"><label data-i18n="lbl_offer_price">Offer Price (Rs)</label><input type="number" id="newOfferPrice" placeholder="2999"></div>
+      <div class="field"><label data-i18n="lbl_original_price">Original Price (optional)</label><input type="number" id="newOfferOldPrice" placeholder="4200"></div>
     </div>
     <div class="field">
-      <label>Countdown Timer</label>
+      <label data-i18n="lbl_countdown">Countdown Timer</label>
       <select id="newOfferCountdown">
-        <option value="none">No countdown</option>
-        <option value="today">Ends today (midnight)</option>
-        <option value="3">Ends in 3 days</option>
-        <option value="7">Ends in 7 days</option>
+        <option value="none" data-i18n="opt_no_countdown">No countdown</option>
+        <option value="today" data-i18n="opt_ends_today">Ends today (midnight)</option>
+        <option value="3" data-i18n="opt_ends_3days">Ends in 3 days</option>
+        <option value="7" data-i18n="opt_ends_7days">Ends in 7 days</option>
       </select>
     </div>
-    <button class="btn-primary full" id="saveOfferBtn"><i class="fa-solid fa-check"></i> Save Offer</button>
+    <button class="btn-primary full" id="saveOfferBtn"><i class="fa-solid fa-check"></i> <span data-i18n="btn_save_offer">Save Offer</span></button>
   </div>
 </div>
 
