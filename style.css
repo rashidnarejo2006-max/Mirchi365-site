@@ -381,7 +381,7 @@ body.view-only .view-only-only{ display:inline-block; }
 .profile-meta{ display:flex; flex-direction:column; text-align:left; line-height:1.2; }
 .profile-meta small{ color:var(--muted); font-size:10.5px; }
 
-.content{ padding:22px 18px 60px; }
+.content{ padding:22px 18px 60px; max-width:1560px; margin:0 auto; width:100%; }
 .page{ display:none; animation: fade-up .35s var(--ease); }
 .page.active{ display:block; }
 @keyframes fade-up{ from{ opacity:0; transform:translateY(10px);} to{opacity:1; transform:none;} }
@@ -412,7 +412,9 @@ body.view-only .view-only-only{ display:inline-block; }
    STAT CARDS / DASHBOARD
    ========================================================================== */
 .stat-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:16px; margin-bottom:20px; }
-.stat-card{ display:flex; align-items:center; gap:14px; padding:18px; transition: transform .25s var(--ease); }
+.stat-card{ display:flex; align-items:center; gap:14px; padding:18px; min-height:88px; transition: transform .25s var(--ease); }
+.stat-card > div:last-child{ min-width:0; }
+.stat-card h3{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .stat-card:hover{ transform: translateY(-4px); }
 .stat-icon{
   width:46px; height:46px; border-radius:13px; flex-shrink:0;
@@ -439,7 +441,7 @@ body.view-only .view-only-only{ display:inline-block; }
 /* ==========================================================================
    MENU / NEW ORDER
    ========================================================================== */
-.order-layout{ display:grid; grid-template-columns:1fr 380px; gap:18px; align-items:start; }
+.order-layout{ display:grid; grid-template-columns: minmax(0,1fr) minmax(320px, 400px); gap:18px; align-items:start; }
 .cat-tabs{ display:flex; gap:8px; overflow-x:auto; padding-bottom:10px; margin-bottom:14px; }
 .cat-tab{
   flex-shrink:0; padding:9px 16px; border-radius:30px; font-size:12.5px; font-weight:600;

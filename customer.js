@@ -45,9 +45,9 @@ const CustomerManager = {
       existing.totalSpent = (existing.totalSpent||0) + amount;
       existing.points = (existing.points||0) + Math.round(amount/100);
       await this.update(existing);
-      return existing;
+      return { record: existing, isNew:false };
     }
     const res = await this.add({ name: name || 'Walk-in Customer', phone, orders:1, totalSpent:amount, points:Math.round(amount/100) });
-    return res.record;
+    return { record: res.record, isNew:true };
   },
 };

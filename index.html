@@ -68,7 +68,7 @@
       </button>
 
       <div class="demo-hint">
-        logins for Preview — &nbsp;•&nbsp; <b>admin</b> / <b>123456</b> (view only)
+        Demo logins — <b>mian</b> / <b>258000</b> (editor) &nbsp;•&nbsp; <b>admin</b> / <b>123456</b> (view only)
       </div>
     </form>
   </div>
@@ -228,7 +228,7 @@
               <div class="sum-row"><span data-i18n="subtotal_label">Subtotal</span><b id="sumSubtotal">Rs 0</b></div>
               <div class="sum-row edit-row">
                 <span data-i18n="discount_label">Discount</span>
-                <div class="mini-input"><input type="number" id="discountInput" value="0" min="0"><select id="discountType"><option class="abcd"  value="pct">%</option><option class="abcd" value="flat">Rs</option></select></div>
+                <div class="mini-input"><input type="number" id="discountInput" value="0" min="0"><select id="discountType"><option class="abcd" value="pct">%</option><option class="abcd" value="flat">Rs</option></select></div>
               </div>
               <div class="sum-row"><span>GST (<span id="gstPctLabel">5</span>%)</span><b id="sumGst">Rs 0</b></div>
               <div class="sum-row"><span data-i18n="service_charges_label">Service Charges</span><b id="sumService">Rs 0</b></div>
@@ -325,11 +325,15 @@
       <!-- ===================== REPORTS ===================== -->
       <section class="page" id="page-reports">
         <div class="page-head"><div><h2 data-i18n="page_reports_title">Reports</h2><p class="muted" data-i18n="reports_subtitle">Sales performance overview.</p></div>
-          <div class="report-range">
-            <button class="range-btn active" data-range="today" data-i18n="range_today">Today</button>
-            <button class="range-btn" data-range="week" data-i18n="range_weekly">Weekly</button>
-            <button class="range-btn" data-range="month" data-i18n="range_monthly">Monthly</button>
-            <button class="range-btn" data-range="year" data-i18n="range_yearly">Yearly</button>
+          <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+            <div class="report-range">
+              <button class="range-btn active" data-range="today" data-i18n="range_today">Today</button>
+              <button class="range-btn" data-range="week" data-i18n="range_weekly">Weekly</button>
+              <button class="range-btn" data-range="month" data-i18n="range_monthly">Monthly</button>
+              <button class="range-btn" data-range="year" data-i18n="range_yearly">Yearly</button>
+            </div>
+            <button class="btn-secondary" id="downloadReportPdfBtn"><i class="fa-solid fa-file-pdf"></i> <span data-i18n="btn_download_pdf_report">Download PDF</span></button>
+            <button class="btn-secondary" id="downloadReportWordBtn"><i class="fa-solid fa-file-word"></i> <span data-i18n="btn_download_word_report">Download Word</span></button>
           </div>
         </div>
         <div class="dash-grid">
@@ -465,9 +469,9 @@
     <div class="field">
       <label data-i18n="th_stock">Stock</label>
       <select id="newItemStock">
-        <option class="abcd" value="in">In Stock</option>
-        <option class="abcd" value="low">Low Stock</option>
-        <option class="abcd" value="out">Out of Stock</option>
+        <option value="in">In Stock</option>
+        <option value="low">Low Stock</option>
+        <option value="out">Out of Stock</option>
       </select>
     </div>
     <button class="btn-primary full" id="saveMenuItemBtn"><i class="fa-solid fa-check"></i> <span data-i18n="btn_save_item">Save Item</span></button>

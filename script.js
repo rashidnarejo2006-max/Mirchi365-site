@@ -329,9 +329,21 @@ async function buildNotifications(){
       for(const s of seed) await NotificationManager.add(s.text, s.icon);
       items = await NotificationManager.getAll();
     }
+    items.sort((a,b)=> (b.createdAt||0) - (a.createdAt||0));
     $('#notifList').innerHTML = items.map(i=>`<div class="notif-item"><i class="${i.icon}"></i><span>${i.text}</span></div>`).join('');
   }catch(err){
     console.error('Loading notifications failed:', err);
+  }
+}
+
+/** Persists a new alert, pins it to the top of the bell dropdown, and lights up the badge dot. */
+async function addNotification(text, icon){
+  try{
+    await NotificationManager.add(text, icon);
+    $('#notifList').insertAdjacentHTML('afterbegin', `<div class="notif-item"><i class="${icon}"></i><span>${text}</span></div>`);
+    $('#notifDot').style.display = 'block';
+  }catch(err){
+    console.error('Saving notification failed:', err);
   }
 }
 
@@ -525,8 +537,12 @@ $('#confirmPaymentBtn').addEventListener('click', async ()=>{
     // 1. Save to IndexedDB first (order + kitchen ticket + customer + payment record).
     const saved = await OrderManager.add(order);
     order.id = saved.id;
-    await CustomerManager.recordOrder(order.phone, order.customer, order.grand);
+    const custResult = await CustomerManager.recordOrder(order.phone, order.customer, order.grand);
     await PaymentManager.logPayment(order);
+
+    if(custResult && custResult.isNew){
+      addNotification(`New customer ${custResult.record.name} registered`, 'fa-solid fa-user-plus');
+    }
 
     // Stock roughly decrements (cosmetic) — persist any change that happens.
     for(const ci of order.items){
@@ -534,6 +550,7 @@ $('#confirmPaymentBtn').addEventListener('click', async ()=>{
       if(m && m.stock==='in' && Math.random()<0.08){
         m.stock = 'low';
         await MenuManager.update(m);
+        addNotification(`${m.name} is running Low on Stock`, 'fa-solid fa-triangle-exclamation');
       }
     }
   }catch(err){
@@ -634,6 +651,9 @@ function renderKotBoard(){
     try{ await OrderManager.updateStatus(order); }catch(err){ console.error(err); toast('Could not save status update.', 'error'); }
     renderKotBoard(); updateDashboard(); renderDashKot();
     toast(`Order #${order.token} → ${order.status}`, 'info');
+    if(order.status === 'Ready'){
+      addNotification(`Order #${order.token} is Ready for pickup/serving`, 'fa-solid fa-bell');
+    }
   }));
 
   $('#kotBadge').textContent = ORDERS.filter(o=>o.status!=='Delivered').length;
@@ -713,6 +733,11 @@ function renderMenuTable(filterCat="All"){
     renderMenuGrid();
     updateDashboard();
     toast(`${m.name} stock set to "${stockLabel(m.stock)}"`, 'success');
+    if(m.stock==='out'){
+      addNotification(`${m.name} is now Out of Stock`, 'fa-solid fa-circle-exclamation');
+    } else if(m.stock==='low'){
+      addNotification(`${m.name} is running Low on Stock`, 'fa-solid fa-triangle-exclamation');
+    }
   }));
 }
 $('#menuMgSearch').addEventListener('input', ()=> renderMenuTable());
@@ -782,6 +807,7 @@ $('#saveCustomerBtn').addEventListener('click', async ()=>{
   renderCustomers(); closeModal('customerModal');
   $('#newCustName').value=''; $('#newCustPhone').value=''; $('#newCustAddress').value='';
   toast('Customer added','success');
+  addNotification(`New customer ${name} registered`, 'fa-solid fa-user-plus');
 });
 
 /* -------------------------------------------------------------------------
@@ -946,6 +972,89 @@ function renderTopLists(){
   const topCust = [...CUSTOMERS].sort((a,b)=>b.totalSpent-a.totalSpent).slice(0,6);
   $('#topCustomersList').innerHTML = topCust.map(c=>`<div class="mini-kot-item"><span>${c.name}</span><b>${fmt(c.totalSpent)}</b></div>`).join('');
 }
+
+/* ---- Report export (PDF via print dialog, Word via a .doc download) ---- */
+function buildReportHTML(){
+  const totalSales = ORDERS.reduce((s,o)=>s+o.grand,0);
+  const totalOrders = ORDERS.length;
+  const itemCount = {};
+  ORDERS.forEach(o=>o.items.forEach(i=>{ itemCount[i.name]=(itemCount[i.name]||0)+i.qty; }));
+  const topItems = Object.entries(itemCount).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  const topCustomers = [...CUSTOMERS].sort((a,b)=>b.totalSpent-a.totalSpent).slice(0,10);
+  const methodTotals = {};
+  ORDERS.forEach(o=>{ methodTotals[o.payment] = (methodTotals[o.payment]||0) + o.grand; });
+
+  const rows = (arr, cols) => arr.length
+    ? arr.map(r=>`<tr>${cols.map(c=>`<td style="padding:6px 10px;border:1px solid #ddd;">${r[c]}</td>`).join('')}</tr>`).join('')
+    : `<tr><td colspan="${cols.length}" style="padding:8px;border:1px solid #ddd;color:#888;">No data available.</td></tr>`;
+
+  const itemRows = topItems.map(([name,qty])=>({name, qty})).map(r=>`<tr><td style="padding:6px 10px;border:1px solid #ddd;">${r.name}</td><td style="padding:6px 10px;border:1px solid #ddd;">${r.qty}</td></tr>`).join('') || `<tr><td colspan="2" style="padding:8px;border:1px solid #ddd;color:#888;">No sales yet.</td></tr>`;
+  const custRows = topCustomers.map(c=>`<tr><td style="padding:6px 10px;border:1px solid #ddd;">${c.name}</td><td style="padding:6px 10px;border:1px solid #ddd;">${c.phone}</td><td style="padding:6px 10px;border:1px solid #ddd;">${fmt(c.totalSpent)}</td></tr>`).join('') || `<tr><td colspan="3" style="padding:8px;border:1px solid #ddd;color:#888;">No customers yet.</td></tr>`;
+  const methodRows = Object.entries(methodTotals).map(([m,t])=>`<tr><td style="padding:6px 10px;border:1px solid #ddd;">${m}</td><td style="padding:6px 10px;border:1px solid #ddd;">${fmt(t)}</td></tr>`).join('') || `<tr><td colspan="2" style="padding:8px;border:1px solid #ddd;color:#888;">No payments yet.</td></tr>`;
+
+  const generatedAt = new Date().toLocaleString('en-GB');
+
+  return `
+    <div style="font-family:Arial,Helvetica,sans-serif;color:#111;max-width:700px;margin:0 auto;">
+      <h1 style="color:#e63946;margin-bottom:0;">MIRCHI 365</h1>
+      <p style="margin-top:4px;color:#555;">Sales Report — generated ${generatedAt}</p>
+      <hr style="border:none;border-top:2px solid #e63946;margin:14px 0;">
+
+      <h2 style="font-size:16px;">Summary</h2>
+      <table style="border-collapse:collapse;width:100%;margin-bottom:18px;">
+        <tr><td style="padding:6px 10px;border:1px solid #ddd;"><b>Total Sales</b></td><td style="padding:6px 10px;border:1px solid #ddd;">${fmt(totalSales)}</td></tr>
+        <tr><td style="padding:6px 10px;border:1px solid #ddd;"><b>Total Orders</b></td><td style="padding:6px 10px;border:1px solid #ddd;">${totalOrders}</td></tr>
+        <tr><td style="padding:6px 10px;border:1px solid #ddd;"><b>Total Customers</b></td><td style="padding:6px 10px;border:1px solid #ddd;">${CUSTOMERS.length}</td></tr>
+      </table>
+
+      <h2 style="font-size:16px;">Top Selling Items</h2>
+      <table style="border-collapse:collapse;width:100%;margin-bottom:18px;">
+        <tr><th style="padding:6px 10px;border:1px solid #ddd;background:#f4f4f4;text-align:left;">Item</th><th style="padding:6px 10px;border:1px solid #ddd;background:#f4f4f4;text-align:left;">Qty Sold</th></tr>
+        ${itemRows}
+      </table>
+
+      <h2 style="font-size:16px;">Top Customers</h2>
+      <table style="border-collapse:collapse;width:100%;margin-bottom:18px;">
+        <tr><th style="padding:6px 10px;border:1px solid #ddd;background:#f4f4f4;text-align:left;">Name</th><th style="padding:6px 10px;border:1px solid #ddd;background:#f4f4f4;text-align:left;">Phone</th><th style="padding:6px 10px;border:1px solid #ddd;background:#f4f4f4;text-align:left;">Total Spent</th></tr>
+        ${custRows}
+      </table>
+
+      <h2 style="font-size:16px;">Payment Breakdown</h2>
+      <table style="border-collapse:collapse;width:100%;">
+        <tr><th style="padding:6px 10px;border:1px solid #ddd;background:#f4f4f4;text-align:left;">Method</th><th style="padding:6px 10px;border:1px solid #ddd;background:#f4f4f4;text-align:left;">Amount</th></tr>
+        ${methodRows}
+      </table>
+
+      <p style="margin-top:24px;color:#888;font-size:12px;">Mirchi 365 · National Highway Gambat, Near New Nadra · 0317-2889755</p>
+    </div>
+  `;
+}
+
+$('#downloadReportPdfBtn').addEventListener('click', ()=>{
+  const html = buildReportHTML();
+  const w = window.open('', '_blank', 'width=800,height=900');
+  w.document.write(`<html><head><title>Mirchi365-Report</title></head><body>${html}</body></html>`);
+  w.document.close(); w.focus();
+  setTimeout(()=> w.print(), 300);
+  toast('Preparing report PDF…', 'info');
+});
+
+$('#downloadReportWordBtn').addEventListener('click', ()=>{
+  const html = buildReportHTML();
+  const fullDoc = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+    <head><meta charset="utf-8"><title>Mirchi365-Report</title></head>
+    <body>${html}</body></html>`;
+  const blob = new Blob(['\ufeff', fullDoc], { type: 'application/msword' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Mirchi365-Report-${new Date().toISOString().slice(0,10)}.doc`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('Word report downloaded', 'success');
+});
 $$('.range-btn').forEach(b=>b.addEventListener('click', ()=>{
   $$('.range-btn').forEach(x=>x.classList.remove('active')); b.classList.add('active');
   drawReportChart(); renderTopLists();
@@ -1149,7 +1258,7 @@ const TRANSLATIONS = {
     opt_ends_7days:"Ends in 7 days", btn_save_offer:"Save Offer",
     modal_select_payment:"Select Payment Method", pay_bank_short:"Bank", pay_card_short:"Card", pay_split:"Split",
     lbl_total_payable:"Total Payable", btn_confirm_receipt:"Confirm & Generate Receipt",
-    btn_print:"Print", btn_download_pdf:"Download PDF",
+    btn_print:"Print", btn_download_pdf:"Download PDF", btn_download_pdf_report:"Download PDF", btn_download_word_report:"Download Word",
   },
   ur: {
     nav_dashboard:"ڈیش بورڈ", nav_neworder:"نیا آرڈر", nav_kitchen:"کچن آرڈرز", nav_menu:"مینو",
@@ -1211,7 +1320,7 @@ const TRANSLATIONS = {
     opt_ends_7days:"7 دن میں ختم", btn_save_offer:"آفر محفوظ کریں",
     modal_select_payment:"ادائیگی کا طریقہ منتخب کریں", pay_bank_short:"بینک", pay_card_short:"کارڈ", pay_split:"تقسیم",
     lbl_total_payable:"کل قابلِ ادائیگی", btn_confirm_receipt:"تصدیق کریں اور رسید بنائیں",
-    btn_print:"پرنٹ", btn_download_pdf:"PDF ڈاؤن لوڈ کریں",
+    btn_print:"پرنٹ", btn_download_pdf:"PDF ڈاؤن لوڈ کریں", btn_download_pdf_report:"PDF رپورٹ ڈاؤن لوڈ کریں", btn_download_word_report:"ورڈ رپورٹ ڈاؤن لوڈ کریں",
   },
   sd: {
     nav_dashboard:"ڊيش بورڊ", nav_neworder:"نئون آرڊر", nav_kitchen:"ڪچن آرڊر", nav_menu:"مينيو",
@@ -1273,7 +1382,7 @@ const TRANSLATIONS = {
     opt_ends_7days:"7 ڏينهن ۾ ختم", btn_save_offer:"آفر سانڍيو",
     modal_select_payment:"ادائيگي جو طريقو چونڊيو", pay_bank_short:"بينڪ", pay_card_short:"ڪارڊ", pay_split:"ورهايو",
     lbl_total_payable:"ڪل ادا ڪرڻ جوڳي رقم", btn_confirm_receipt:"تصديق ڪريو ۽ رسيد ٺاهيو",
-    btn_print:"پرنٽ", btn_download_pdf:"PDF ڊائون لوڊ ڪريو",
+    btn_print:"پرنٽ", btn_download_pdf:"PDF ڊائون لوڊ ڪريو", btn_download_pdf_report:"PDF رپورٽ ڊائون لوڊ ڪريو", btn_download_word_report:"ورڊ رپورٽ ڊائون لوڊ ڪريو",
   },
 };
 
