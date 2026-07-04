@@ -4,8 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Mirchi 365 | Restaurant POS</title>
-  <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -70,7 +68,7 @@
       </button>
 
       <div class="demo-hint">
-        Demo logins - &nbsp;•&nbsp; <b>admin</b> / <b>123456</b> (view only)
+        logins for Preview — &nbsp;•&nbsp; <b>admin</b> / <b>123456</b> (view only)
       </div>
     </form>
   </div>
@@ -230,7 +228,7 @@
               <div class="sum-row"><span data-i18n="subtotal_label">Subtotal</span><b id="sumSubtotal">Rs 0</b></div>
               <div class="sum-row edit-row">
                 <span data-i18n="discount_label">Discount</span>
-                <div class="mini-input"><input type="number" id="discountInput" value="0" min="0"><select id="discountType"><option class="abcd" value="pct">%</option><option class="abcd" value="flat">Rs</option></select></div>
+                <div class="mini-input"><input type="number" id="discountInput" value="0" min="0"><select id="discountType"><option class="abcd"  value="pct">%</option><option class="abcd" value="flat">Rs</option></select></div>
               </div>
               <div class="sum-row"><span>GST (<span id="gstPctLabel">5</span>%)</span><b id="sumGst">Rs 0</b></div>
               <div class="sum-row"><span data-i18n="service_charges_label">Service Charges</span><b id="sumService">Rs 0</b></div>
@@ -540,6 +538,18 @@
 <!-- ========== BACK TO TOP ========== -->
 <button id="backToTop" class="back-to-top hidden"><i class="fa-solid fa-chevron-up"></i></button>
 
+<script src="database.js"></script>
+<script src="customer.js"></script>
+<script src="orders.js"></script>
+<script src="menu.js"></script>
+<script src="inventory.js"></script>
+<script src="offers.js"></script>
+<script src="payments.js"></script>
+<script src="settings.js"></script>
+<script src="profile.js"></script>
+<script src="notifications.js"></script>
+<script src="receipt.js"></script>
 <script src="script.js"></script>
+<script src="main.js"></script>
 </body>
 </html>

@@ -140,13 +140,18 @@ $('#forgotLink').addEventListener('click', e=>{ e.preventDefault(); $('#forgotPa
 $('#closeForgot').addEventListener('click', ()=> $('#forgotPanel').classList.add('hidden'));
 $('#sendResetBtn').addEventListener('click', ()=>{ toast('Reset request sent to shift manager','success'); $('#forgotPanel').classList.add('hidden'); });
 
-$('#loginForm').addEventListener('submit', e=>{
+$('#loginForm').addEventListener('submit', async e=>{
   e.preventDefault();
   const u = $('#username').value.trim().toLowerCase();
   const p = $('#password').value.trim();
   const match = USERS.find(usr => usr.username === u && usr.password === p);
   if(match){
     currentUser = match;
+    try{
+      const savedProfile = await ProfileManager.findByUsername(match.username);
+      if(savedProfile) Object.assign(currentUser, { name: savedProfile.name, phone: savedProfile.phone, email: savedProfile.email });
+    }catch(err){ console.error(err); }
+    try{ localStorage.setItem('mirchi365-session', match.username); }catch(e){}
     $('#loginError').classList.remove('show');
     $('#loginScreen').style.opacity = '0';
     $('#loginScreen').style.visibility = 'hidden';
@@ -161,6 +166,8 @@ $('#loginForm').addEventListener('submit', e=>{
 });
 
 function doLogout(){
+  currentUser = null;
+  try{ localStorage.removeItem('mirchi365-session'); }catch(e){}
   $('#app').classList.add('hidden');
   $('#loginScreen').classList.remove('hidden');
   requestAnimationFrame(()=>{ $('#loginScreen').style.opacity='1'; $('#loginScreen').style.visibility='visible'; });
@@ -215,11 +222,13 @@ $('#myProfileLink').addEventListener('click', e=>{
   $('#profileDropdown').classList.add('hidden');
   $('#myProfileModal').classList.remove('hidden');
 });
-$('#saveProfileBtn').addEventListener('click', ()=>{
+$('#saveProfileBtn').addEventListener('click', async ()=>{
   if(!isEditor()) return;
   currentUser.name = $('#profFullName').value.trim() || currentUser.name;
   currentUser.phone = $('#profPhone').value.trim();
   currentUser.email = $('#profEmail').value.trim();
+  try{ await ProfileManager.save(currentUser.username, { name: currentUser.name, phone: currentUser.phone, email: currentUser.email }); }
+  catch(err){ console.error(err); toast('Could not save profile.', 'error'); return; }
   applyRolePermissions();
   closeModal('myProfileModal');
   toast('Profile updated successfully', 'success');
@@ -253,6 +262,7 @@ $('#sidebarCollapseBtn').addEventListener('click', ()=>{
     setSidebarOpen(false);
   } else {
     $('#sidebar').classList.toggle('collapsed');
+    try{ localStorage.setItem('mirchi365-sidebar', $('#sidebar').classList.contains('collapsed') ? 'collapsed' : 'expanded'); }catch(e){}
   }
 });
 
@@ -307,13 +317,22 @@ document.addEventListener('click', e=>{
   if(!e.target.closest('.profile-wrap')) $('#profileDropdown')?.classList.add('hidden');
 });
 
-function buildNotifications(){
-  const items = [
-    {icon:'fa-solid fa-triangle-exclamation', text:'Low stock: Cooking Oil (5 ltr left)'},
-    {icon:'fa-solid fa-receipt', text:'Order #101 marked Ready for pickup'},
-    {icon:'fa-solid fa-user-plus', text:'New customer Bilal Hussain registered'},
-  ];
-  $('#notifList').innerHTML = items.map(i=>`<div class="notif-item"><i class="${i.icon}"></i><span>${i.text}</span></div>`).join('');
+async function buildNotifications(){
+  try{
+    let items = await NotificationManager.getAll();
+    if(items.length === 0){
+      const seed = [
+        {icon:'fa-solid fa-triangle-exclamation', text:'Low stock: Cooking Oil (5 ltr left)'},
+        {icon:'fa-solid fa-receipt', text:'Order #101 marked Ready for pickup'},
+        {icon:'fa-solid fa-user-plus', text:'New customer Bilal Hussain registered'},
+      ];
+      for(const s of seed) await NotificationManager.add(s.text, s.icon);
+      items = await NotificationManager.getAll();
+    }
+    $('#notifList').innerHTML = items.map(i=>`<div class="notif-item"><i class="${i.icon}"></i><span>${i.text}</span></div>`).join('');
+  }catch(err){
+    console.error('Loading notifications failed:', err);
+  }
 }
 
 /* -------------------------------------------------------------------------
@@ -361,10 +380,11 @@ function renderMenuGrid(){
 
   $$('[data-add]', grid).forEach(b=>b.addEventListener('click', ()=> addToCart(+b.dataset.add)));
   $$('[data-qv]', grid).forEach(b=>b.addEventListener('click', ()=> openQuickView(+b.dataset.qv)));
-  $$('[data-fav]', grid).forEach(b=>b.addEventListener('click', e=>{
+  $$('[data-fav]', grid).forEach(b=>b.addEventListener('click', async e=>{
     e.stopPropagation();
     const item = MENU.find(m=>m.id===+b.dataset.fav);
     item.fav = !item.fav;
+    try{ await MenuManager.update(item); }catch(err){ console.error(err); }
     renderMenuGrid();
   }));
 }
@@ -484,7 +504,7 @@ $$('.pay-opt').forEach(btn=>{
   });
 });
 
-$('#confirmPaymentBtn').addEventListener('click', ()=>{
+$('#confirmPaymentBtn').addEventListener('click', async ()=>{
   const totals = computeTotals();
   tokenCounter++;
   const order = {
@@ -500,21 +520,32 @@ $('#confirmPaymentBtn').addEventListener('click', ()=>{
     time: new Date(),
     ...totals
   };
-  ORDERS.push(order);
-  lastOrderForReceipt = order;
 
-  // update customer record
-  let cust = CUSTOMERS.find(c=>c.phone===order.phone);
-  if(order.phone!=='-'){
-    if(cust){ cust.orders++; cust.totalSpent += order.grand; cust.points += Math.round(order.grand/100); }
-    else { CUSTOMERS.push({name:order.customer, phone:order.phone, orders:1, totalSpent:order.grand, points:Math.round(order.grand/100)}); }
+  try{
+    // 1. Save to IndexedDB first (order + kitchen ticket + customer + payment record).
+    const saved = await OrderManager.add(order);
+    order.id = saved.id;
+    await CustomerManager.recordOrder(order.phone, order.customer, order.grand);
+    await PaymentManager.logPayment(order);
+
+    // Stock roughly decrements (cosmetic) — persist any change that happens.
+    for(const ci of order.items){
+      const m = MENU.find(x=>x.id===ci.id);
+      if(m && m.stock==='in' && Math.random()<0.08){
+        m.stock = 'low';
+        await MenuManager.update(m);
+      }
+    }
+  }catch(err){
+    console.error('Checkout save failed:', err);
+    toast('Could not save this order — please try again.', 'error');
+    return; // Never print/generate a receipt if the database save failed.
   }
 
-  // update stock roughly (decrement random chance to low/out) — cosmetic
-  order.items.forEach(ci=>{
-    const m = MENU.find(x=>x.id===ci.id);
-    if(m && m.stock==='in' && Math.random()<0.08) m.stock='low';
-  });
+  // 2. Only now that the save succeeded: refresh in-memory state + UI.
+  ORDERS.push(order);
+  lastOrderForReceipt = order;
+  CUSTOMERS = await CustomerManager.getAll();
 
   CART = [];
   renderCart();
@@ -546,36 +577,7 @@ function saveReceiptToBlob(order){
 }
 
 function buildReceipt(order){
-  const itemsHtml = order.items.map(i=>`
-    <div class="r-row"><span>${i.name} x${i.qty}</span><span>${fmt(i.price*i.qty)}</span></div>
-  `).join('');
-  $('#receiptContent').innerHTML = `
-    <div class="receipt-center">
-      <b style="font-size:15px;">MIRCHI 365</b><br>
-      National Highway Gambat, Near New Nadra<br>
-      0317-2889755 / 0312-3515342
-    </div>
-    <hr>
-    <div class="r-row"><span>Token</span><span>#${order.token}</span></div>
-    <div class="r-row"><span>Date</span><span>${order.time.toLocaleDateString('en-GB')}</span></div>
-    <div class="r-row"><span>Time</span><span>${order.time.toLocaleTimeString('en-US')}</span></div>
-    <div class="r-row"><span>Cashier</span><span>Admin</span></div>
-    <div class="r-row"><span>Customer</span><span>${order.customer}</span></div>
-    <div class="r-row"><span>Order Type</span><span>${order.type}</span></div>
-    <hr>
-    ${itemsHtml}
-    <hr>
-    <div class="r-row"><span>Subtotal</span><span>${fmt(order.subtotal)}</span></div>
-    <div class="r-row"><span>Discount</span><span>-${fmt(order.discount)}</span></div>
-    <div class="r-row"><span>GST</span><span>${fmt(order.gst)}</span></div>
-    <div class="r-row"><span>Service</span><span>${fmt(order.service)}</span></div>
-    <div class="r-row"><span>Delivery</span><span>${fmt(order.delivery)}</span></div>
-    <hr>
-    <div class="r-row" style="font-size:14px;"><b>GRAND TOTAL</b><b>${fmt(order.grand)}</b></div>
-    <div class="r-row"><span>Payment</span><span>${order.payment}</span></div>
-    <hr>
-    <div class="receipt-center">Thank you for dining with us! 🌶️<br>Visit again — Mirchi 365</div>
-  `;
+  $('#receiptContent').innerHTML = ReceiptManager.build(order, fmt);
 }
 
 $('#printReceiptBtn').addEventListener('click', ()=>{
@@ -625,10 +627,11 @@ function renderKotBoard(){
     cols[o.status] && $(cols[o.status]).appendChild(card);
   });
 
-  $$('[data-advance]').forEach(b=>b.addEventListener('click', ()=>{
+  $$('[data-advance]').forEach(b=>b.addEventListener('click', async ()=>{
     const order = ORDERS.find(o=>o.token==b.dataset.advance);
     const next = {Pending:'Preparing', Preparing:'Ready', Ready:'Delivered'};
     order.status = next[order.status] || order.status;
+    try{ await OrderManager.updateStatus(order); }catch(err){ console.error(err); toast('Could not save status update.', 'error'); }
     renderKotBoard(); updateDashboard(); renderDashKot();
     toast(`Order #${order.token} → ${order.status}`, 'info');
   }));
@@ -685,21 +688,28 @@ function renderMenuTable(filterCat="All"){
     </tr>
   `).join('') || `<tr><td colspan="6" class="muted" style="text-align:center;padding:24px;">No items found.</td></tr>`;
 
-  $$('[data-delmenu]').forEach(b=>b.addEventListener('click', ()=>{
+  $$('[data-delmenu]').forEach(b=>b.addEventListener('click', async ()=>{
+    const m = MENU.find(x=>x.id==b.dataset.delmenu);
+    try{ if(m) await MenuManager.delete(m.id); }catch(err){ console.error(err); toast('Could not delete item.', 'error'); return; }
     MENU = MENU.filter(m=>m.id!=b.dataset.delmenu);
     renderMenuTable(filterCat); renderMenuGrid();
     toast('Menu item removed', 'info');
   }));
-  $$('[data-editmenu]').forEach(b=>b.addEventListener('click', ()=>{
+  $$('[data-editmenu]').forEach(b=>b.addEventListener('click', async ()=>{
     const m = MENU.find(x=>x.id==b.dataset.editmenu);
     const newPrice = prompt(`New price for ${m.name}:`, m.price);
-    if(newPrice && !isNaN(newPrice)){ m.price = +newPrice; renderMenuTable(filterCat); renderMenuGrid(); toast('Price updated','success'); }
+    if(newPrice && !isNaN(newPrice)){
+      m.price = +newPrice;
+      try{ await MenuManager.update(m); }catch(err){ console.error(err); toast('Could not save price.', 'error'); return; }
+      renderMenuTable(filterCat); renderMenuGrid(); toast('Price updated','success');
+    }
   }));
   // Changing stock status here immediately reflects in the New Order menu grid too,
   // since both read from the same shared MENU array.
-  $$('[data-stockselect]').forEach(sel=>sel.addEventListener('change', ()=>{
+  $$('[data-stockselect]').forEach(sel=>sel.addEventListener('change', async ()=>{
     const m = MENU.find(x=>x.id==sel.dataset.stockselect);
     m.stock = sel.value;
+    try{ await MenuManager.update(m); }catch(err){ console.error(err); toast('Could not save stock status.', 'error'); return; }
     renderMenuGrid();
     updateDashboard();
     toast(`${m.name} stock set to "${stockLabel(m.stock)}"`, 'success');
@@ -712,15 +722,20 @@ $('#addMenuItemBtn').addEventListener('click', ()=>{
   $('#menuItemModal').classList.remove('hidden');
 });
 
-$('#saveMenuItemBtn').addEventListener('click', ()=>{
+$('#saveMenuItemBtn').addEventListener('click', async ()=>{
   const name = $('#newItemName').value.trim();
   const cat = $('#newItemCat').value.trim();
   const price = +$('#newItemPrice').value;
   if(!name || !cat || !price){ toast('Item name, category and price are required', 'error'); return; }
 
-  const newId = Math.max(0, ...MENU.map(m=>m.id)) + 1;
-  MENU.push({ id:newId, name, cat, price, stock:$('#newItemStock').value, fav:false });
+  const newItem = { name, cat, price, stock:$('#newItemStock').value, fav:false };
+  let result;
+  try{ result = await MenuManager.add(newItem); }
+  catch(err){ console.error(err); toast('Could not save menu item.', 'error'); return; }
 
+  if(!result.ok){ toast(`"${name}" already exists in ${cat}.`, 'error'); return; }
+
+  MENU.push(result.record);
   renderCategoryTabs();
   renderCatTabsManage();
   renderMenuGrid();
@@ -742,7 +757,9 @@ function renderCustomers(){
       <td><i class="fa-solid fa-eye tbl-action"></i><i class="fa-solid fa-trash tbl-action edit-only" data-delcust="${c.phone}"></i></td>
     </tr>
   `).join('');
-  $$('[data-delcust]').forEach(b=>b.addEventListener('click', ()=>{
+  $$('[data-delcust]').forEach(b=>b.addEventListener('click', async ()=>{
+    const cust = CUSTOMERS.find(c=>c.phone===b.dataset.delcust);
+    try{ if(cust && cust.id) await CustomerManager.delete(cust.id); }catch(err){ console.error(err); toast('Could not delete customer.', 'error'); return; }
     CUSTOMERS = CUSTOMERS.filter(c=>c.phone!==b.dataset.delcust);
     renderCustomers();
     toast('Customer removed','info');
@@ -750,11 +767,18 @@ function renderCustomers(){
   animateStatCounters();
 }
 $('#addCustomerBtn').addEventListener('click', ()=> $('#customerModal').classList.remove('hidden'));
-$('#saveCustomerBtn').addEventListener('click', ()=>{
+$('#saveCustomerBtn').addEventListener('click', async ()=>{
   const name = $('#newCustName').value.trim();
   const phone = $('#newCustPhone').value.trim();
   if(!name || !phone){ toast('Name and phone are required','error'); return; }
-  CUSTOMERS.push({name, phone, orders:0, totalSpent:0, points:0});
+
+  let result;
+  try{ result = await CustomerManager.add({ name, phone, orders:0, totalSpent:0, points:0 }); }
+  catch(err){ console.error(err); toast('Could not save customer.', 'error'); return; }
+
+  if(!result.ok){ toast('A customer with this phone number already exists.', 'error'); return; }
+
+  CUSTOMERS.push(result.record);
   renderCustomers(); closeModal('customerModal');
   $('#newCustName').value=''; $('#newCustPhone').value=''; $('#newCustAddress').value='';
   toast('Customer added','success');
@@ -779,24 +803,38 @@ function renderInventory(){
       <td><i class="fa-solid fa-pen tbl-action edit-only" data-editinv="${idx}"></i><i class="fa-solid fa-trash tbl-action edit-only" data-delinv="${idx}"></i></td>
     </tr>`;
   }).join('');
-  $$('[data-delinv]').forEach(b=>b.addEventListener('click', ()=>{
+  $$('[data-delinv]').forEach(b=>b.addEventListener('click', async ()=>{
+    const it = INVENTORY[+b.dataset.delinv];
+    try{ if(it.id) await InventoryManager.delete(it.id); }catch(err){ console.error(err); toast('Could not delete item.', 'error'); return; }
     INVENTORY.splice(+b.dataset.delinv,1); renderInventory(); toast('Inventory item removed','info');
   }));
-  $$('[data-editinv]').forEach(b=>b.addEventListener('click', ()=>{
+  $$('[data-editinv]').forEach(b=>b.addEventListener('click', async ()=>{
     const it = INVENTORY[+b.dataset.editinv];
     const newStock = prompt(`Update stock for ${it.name} (${it.unit}):`, it.stock);
-    if(newStock!==null && !isNaN(newStock)){ it.stock = +newStock; renderInventory(); updateDashboard(); toast('Stock updated','success'); }
+    if(newStock!==null && !isNaN(newStock)){
+      it.stock = +newStock;
+      try{ await InventoryManager.update(it); }catch(err){ console.error(err); toast('Could not save stock update.', 'error'); return; }
+      renderInventory(); updateDashboard(); toast('Stock updated','success');
+    }
   }));
   $('#lowStockCount').dataset.counter = INVENTORY.filter(it=>invStatus(it)!=='in').length;
 }
 $('#addStockBtn').addEventListener('click', ()=> $('#stockModal').classList.remove('hidden'));
-$('#saveStockBtn').addEventListener('click', ()=>{
+$('#saveStockBtn').addEventListener('click', async ()=>{
   const name = $('#newStockName').value.trim();
   if(!name){ toast('Ingredient name required','error'); return; }
-  INVENTORY.push({
+
+  const newItem = {
     name, stock:+$('#newStockQty').value||0, unit:$('#newStockUnit').value||'pcs',
     supplier:$('#newStockSupplier').value||'-', purchase:+$('#newStockPurchase').value||0, selling:+$('#newStockSelling').value||0
-  });
+  };
+  let result;
+  try{ result = await InventoryManager.add(newItem); }
+  catch(err){ console.error(err); toast('Could not save item.', 'error'); return; }
+
+  if(!result.ok){ toast('This ingredient already exists in inventory.', 'error'); return; }
+
+  INVENTORY.push(result.record);
   renderInventory(); closeModal('stockModal');
   ['newStockName','newStockQty','newStockUnit','newStockSupplier','newStockPurchase','newStockSelling'].forEach(id=>$('#'+id).value='');
   toast('Inventory item added','success');
@@ -944,7 +982,9 @@ function renderOffers(){
     </div>`;
   }).join('') || `<div class="muted" style="padding:20px;">No offers running right now — add one!</div>`;
 
-  $$('[data-deloffer]', wrap).forEach(b=>b.addEventListener('click', ()=>{
+  $$('[data-deloffer]', wrap).forEach(b=>b.addEventListener('click', async ()=>{
+    const offer = OFFERS.find(o=>o.id == b.dataset.deloffer);
+    try{ if(offer) await OfferManager.delete(offer.id); }catch(err){ console.error(err); toast('Could not delete offer.', 'error'); return; }
     OFFERS = OFFERS.filter(o=>o.id != b.dataset.deloffer);
     renderOffers();
     toast('Offer removed', 'info');
@@ -966,7 +1006,7 @@ function addOfferToCart(offerId){
 
 $('#addOfferBtn').addEventListener('click', ()=> $('#offerModal').classList.remove('hidden'));
 
-$('#saveOfferBtn').addEventListener('click', ()=>{
+$('#saveOfferBtn').addEventListener('click', async ()=>{
   const title = $('#newOfferTitle').value.trim();
   const desc = $('#newOfferDesc').value.trim();
   if(!title || !desc){ toast('Title and description are required', 'error'); return; }
@@ -976,15 +1016,22 @@ $('#saveOfferBtn').addEventListener('click', ()=>{
   if(cd==='today'){ deadline = new Date(); deadline.setHours(23,59,59,999); }
   else if(cd==='3' || cd==='7'){ deadline = new Date(Date.now() + (+cd)*86400000); }
 
-  offerIdCounter++;
-  OFFERS.push({
-    id: offerIdCounter,
+  const newOffer = {
     tag: $('#newOfferTag').value,
     title, desc,
     price: +$('#newOfferPrice').value || null,
     oldPrice: +$('#newOfferOldPrice').value || null,
     deadline
-  });
+  };
+
+  let result;
+  try{ result = await OfferManager.add(newOffer); }
+  catch(err){ console.error(err); toast('Could not save offer.', 'error'); return; }
+
+  if(!result.ok){ toast(`An offer titled "${title}" already exists.`, 'error'); return; }
+
+  OFFERS.push({ ...result.record, deadline: result.record.deadline ? new Date(result.record.deadline) : null });
+  offerIdCounter = Math.max(offerIdCounter, result.record.id);
 
   renderOffers();
   closeModal('offerModal');
@@ -1009,11 +1056,13 @@ setInterval(tickOfferCountdowns, 1000);
 /* -------------------------------------------------------------------------
    17. SETTINGS
    ------------------------------------------------------------------------- */
-$('#saveSettingsBtn').addEventListener('click', ()=>{
+$('#saveSettingsBtn').addEventListener('click', async ()=>{
   SETTINGS.taxPct = +$('#setTax').value || 5;
   SETTINGS.servicePct = +$('#setService').value || 2;
   SETTINGS.deliveryDefault = +$('#setDelivery').value || 0;
   $('#deliveryInput').value = SETTINGS.deliveryDefault;
+  try{ await SettingsManager.save({ ...SETTINGS }); }
+  catch(err){ console.error(err); toast('Could not save settings.', 'error'); return; }
   computeTotals();
   toast('Settings saved successfully','success');
 });
