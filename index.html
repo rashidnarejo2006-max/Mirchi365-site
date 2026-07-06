@@ -68,7 +68,7 @@
       </button>
 
       <div class="demo-hint">
-        Demo logins — <b>mian</b> / <b>258000</b> (editor) &nbsp;•&nbsp; <b>admin</b> / <b>123456</b> (view only)
+        Demo logins — &nbsp;•&nbsp; <b>admin</b> / <b>123456</b> (view only)
       </div>
     </form>
   </div>
@@ -133,7 +133,10 @@
         <div class="notif-wrap">
           <button class="icon-btn" id="notifBtn"><i class="fa-solid fa-bell"></i><span class="badge-dot" id="notifDot"></span></button>
           <div class="notif-dropdown hidden" id="notifDropdown">
-            <div class="notif-head" data-i18n="notifications">Notifications</div>
+            <div class="notif-head-row">
+              <div class="notif-head" data-i18n="notifications">Notifications</div>
+              <button class="notif-clear-all" id="clearAllNotifsBtn" data-i18n="clear_all_label">Clear All</button>
+            </div>
             <div id="notifList" class="notif-list"></div>
           </div>
         </div>
@@ -246,7 +249,10 @@
 
       <!-- ===================== KITCHEN ===================== -->
       <section class="page" id="page-kitchen">
-        <div class="page-head"><div><h2 data-i18n="page_kitchen_title">Kitchen Orders (KOT)</h2><p class="muted" data-i18n="kitchen_subtitle">Live order tickets for the kitchen team.</p></div></div>
+        <div class="page-head">
+          <div><h2 data-i18n="page_kitchen_title">Kitchen Orders (KOT)</h2><p class="muted" data-i18n="kitchen_subtitle">Live order tickets for the kitchen team.</p></div>
+          <button class="btn-secondary edit-only" id="clearDeliveredBtn"><i class="fa-solid fa-broom"></i> <span data-i18n="btn_clear_delivered">Clear Delivered</span></button>
+        </div>
         <div class="kot-board" id="kotBoard">
           <div class="kot-col"><h4><span class="dot-status red"></span> <span data-i18n="kot_status_pending">Pending</span></h4><div class="kot-list" id="kotPending"></div></div>
           <div class="kot-col"><h4><span class="dot-status yellow"></span> <span data-i18n="kot_status_preparing">Preparing</span></h4><div class="kot-list" id="kotPreparing"></div></div>
@@ -276,7 +282,11 @@
       <section class="page" id="page-customers">
         <div class="page-head">
           <div><h2 data-i18n="page_customers_title">Customers</h2><p class="muted" data-i18n="customers_subtitle">Manage your guests and reward points.</p></div>
-          <button class="btn-primary edit-only" id="addCustomerBtn"><i class="fa-solid fa-plus"></i> <span data-i18n="btn_add_customer">Add Customer</span></button>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <button class="btn-secondary" id="downloadCustPdfBtn"><i class="fa-solid fa-file-pdf"></i> <span data-i18n="btn_download_pdf_report">Download PDF</span></button>
+            <button class="btn-secondary" id="downloadCustWordBtn"><i class="fa-solid fa-file-word"></i> <span data-i18n="btn_download_word_report">Download Word</span></button>
+            <button class="btn-primary edit-only" id="addCustomerBtn"><i class="fa-solid fa-plus"></i> <span data-i18n="btn_add_customer">Add Customer</span></button>
+          </div>
         </div>
         <div class="table-wrap glass">
           <table class="data-table">
@@ -475,6 +485,16 @@
       </select>
     </div>
     <button class="btn-primary full" id="saveMenuItemBtn"><i class="fa-solid fa-check"></i> <span data-i18n="btn_save_item">Save Item</span></button>
+  </div>
+</div>
+
+<!-- ========== CUSTOMER ORDER HISTORY MODAL ========== -->
+<div class="modal-overlay hidden" id="customerHistoryModal">
+  <div class="modal glass" style="width:480px;">
+    <button class="modal-close" data-close="customerHistoryModal"><i class="fa-solid fa-xmark"></i></button>
+    <h3><i class="fa-solid fa-receipt"></i> <span data-i18n="modal_order_history">Order History</span></h3>
+    <div id="customerHistoryMeta" class="muted" style="margin-bottom:14px;"></div>
+    <div id="customerHistoryList" style="max-height:420px; overflow-y:auto; display:flex; flex-direction:column; gap:12px;"></div>
   </div>
 </div>
 

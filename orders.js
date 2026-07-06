@@ -39,4 +39,11 @@ const OrderManager = {
   async getKitchenTickets(){
     return DB.getAll(this.KOT_STORE);
   },
+
+  /** Removes an order and its matching kitchen ticket (used by "Clear Delivered"). */
+  async delete(order){
+    if(order.id) await DB.delete(this.STORE, order.id);
+    const tickets = await DB.getByIndex(this.KOT_STORE, "token", order.token);
+    for(const t of tickets) await DB.delete(this.KOT_STORE, t.id);
+  },
 };

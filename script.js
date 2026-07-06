@@ -264,6 +264,7 @@ $('#sidebarCollapseBtn').addEventListener('click', ()=>{
     $('#sidebar').classList.toggle('collapsed');
     try{ localStorage.setItem('mirchi365-sidebar', $('#sidebar').classList.contains('collapsed') ? 'collapsed' : 'expanded'); }catch(e){}
   }
+  setTimeout(()=>{ if(appInitialized){ drawRevenueChart(); drawReportChart(); drawPaymentChart(); } }, 400);
 });
 
 function goToPage(page){
@@ -303,6 +304,8 @@ function applySavedTheme(){
 }
 applySavedTheme();
 
+let NOTIFICATIONS = [];
+
 $('#notifBtn').addEventListener('click', ()=>{
   $('#notifDropdown').classList.toggle('hidden');
   $('#profileDropdown').classList.add('hidden');
@@ -319,32 +322,82 @@ document.addEventListener('click', e=>{
 
 async function buildNotifications(){
   try{
-    let items = await NotificationManager.getAll();
-    if(items.length === 0){
+    NOTIFICATIONS = await NotificationManager.getAll();
+    if(NOTIFICATIONS.length === 0){
       const seed = [
         {icon:'fa-solid fa-triangle-exclamation', text:'Low stock: Cooking Oil (5 ltr left)'},
         {icon:'fa-solid fa-receipt', text:'Order #101 marked Ready for pickup'},
         {icon:'fa-solid fa-user-plus', text:'New customer Bilal Hussain registered'},
       ];
       for(const s of seed) await NotificationManager.add(s.text, s.icon);
-      items = await NotificationManager.getAll();
+      NOTIFICATIONS = await NotificationManager.getAll();
     }
-    items.sort((a,b)=> (b.createdAt||0) - (a.createdAt||0));
-    $('#notifList').innerHTML = items.map(i=>`<div class="notif-item"><i class="${i.icon}"></i><span>${i.text}</span></div>`).join('');
+    renderNotificationsList();
   }catch(err){
     console.error('Loading notifications failed:', err);
   }
 }
 
-/** Persists a new alert, pins it to the top of the bell dropdown, and lights up the badge dot. */
-async function addNotification(text, icon){
+function renderNotificationsList(){
+  NOTIFICATIONS.sort((a,b)=> (b.createdAt||0) - (a.createdAt||0));
+  const list = $('#notifList');
+  list.innerHTML = NOTIFICATIONS.length ? NOTIFICATIONS.map(i=>`
+    <div class="notif-item" data-notifid="${i.id}" data-notifpage="${i.page||''}">
+      <i class="${i.icon}"></i><span>${i.text}</span>
+      <button class="notif-dismiss" data-notifdismiss="${i.id}" title="Dismiss"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+  `).join('') : `<p class="muted" style="padding:14px;text-align:center;">No notifications right now.</p>`;
+
+  $$('.notif-item', list).forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const page = el.dataset.notifpage;
+      if(page){ goToPage(page); $('#notifDropdown').classList.add('hidden'); }
+    });
+  });
+  $$('[data-notifdismiss]', list).forEach(btn=>{
+    btn.addEventListener('click', async e=>{
+      e.stopPropagation();
+      await removeNotification(+btn.dataset.notifdismiss);
+    });
+  });
+}
+
+/** Persists a new alert, pins it to the top of the bell dropdown, and lights up the badge dot.
+    meta: { page, refType, refId } — see NotificationManager.add for details. */
+async function addNotification(text, icon, meta = {}){
   try{
-    await NotificationManager.add(text, icon);
-    $('#notifList').insertAdjacentHTML('afterbegin', `<div class="notif-item"><i class="${icon}"></i><span>${text}</span></div>`);
+    const record = await NotificationManager.add(text, icon, meta);
+    NOTIFICATIONS.unshift(record);
+    renderNotificationsList();
     $('#notifDot').style.display = 'block';
   }catch(err){
     console.error('Saving notification failed:', err);
   }
+}
+
+async function removeNotification(id){
+  try{ await NotificationManager.delete(id); }catch(err){ console.error(err); }
+  NOTIFICATIONS = NOTIFICATIONS.filter(n=>n.id!==id);
+  renderNotificationsList();
+}
+
+$('#clearAllNotifsBtn').addEventListener('click', async ()=>{
+  try{ await NotificationManager.clearAll(); }catch(err){ console.error(err); }
+  NOTIFICATIONS = [];
+  renderNotificationsList();
+  $('#notifDot').style.display = 'none';
+});
+
+/** Removes any notification(s) that referenced this exact thing, now that it's resolved
+    (e.g. stock is back to "in", or an order has been Delivered). */
+async function autoClearNotifications(refType, refId){
+  const matches = NOTIFICATIONS.filter(n=>n.refType===refType && n.refId===refId);
+  if(matches.length === 0) return;
+  for(const m of matches){
+    try{ await NotificationManager.delete(m.id); }catch(err){ console.error(err); }
+  }
+  NOTIFICATIONS = NOTIFICATIONS.filter(n=>!(n.refType===refType && n.refId===refId));
+  renderNotificationsList();
 }
 
 /* -------------------------------------------------------------------------
@@ -541,7 +594,7 @@ $('#confirmPaymentBtn').addEventListener('click', async ()=>{
     await PaymentManager.logPayment(order);
 
     if(custResult && custResult.isNew){
-      addNotification(`New customer ${custResult.record.name} registered`, 'fa-solid fa-user-plus');
+      addNotification(`New customer ${custResult.record.name} registered`, 'fa-solid fa-user-plus', { page:'customers', refType:'customer', refId: custResult.record.phone });
     }
 
     // Stock roughly decrements (cosmetic) — persist any change that happens.
@@ -550,7 +603,7 @@ $('#confirmPaymentBtn').addEventListener('click', async ()=>{
       if(m && m.stock==='in' && Math.random()<0.08){
         m.stock = 'low';
         await MenuManager.update(m);
-        addNotification(`${m.name} is running Low on Stock`, 'fa-solid fa-triangle-exclamation');
+        addNotification(`${m.name} is running Low on Stock`, 'fa-solid fa-triangle-exclamation', { page:'menu', refType:'stock', refId:m.id });
       }
     }
   }catch(err){
@@ -652,13 +705,31 @@ function renderKotBoard(){
     renderKotBoard(); updateDashboard(); renderDashKot();
     toast(`Order #${order.token} → ${order.status}`, 'info');
     if(order.status === 'Ready'){
-      addNotification(`Order #${order.token} is Ready for pickup/serving`, 'fa-solid fa-bell');
+      addNotification(`Order #${order.token} is Ready for pickup/serving`, 'fa-solid fa-bell', { page:'kitchen', refType:'kitchen', refId:order.token });
+    } else if(order.status === 'Delivered'){
+      autoClearNotifications('kitchen', order.token);
     }
   }));
 
   $('#kotBadge').textContent = ORDERS.filter(o=>o.status!=='Delivered').length;
   renderDashKot();
 }
+
+$('#clearDeliveredBtn').addEventListener('click', async ()=>{
+  const delivered = ORDERS.filter(o=>o.status==='Delivered');
+  if(delivered.length === 0){ toast('No delivered orders to clear', 'info'); return; }
+  try{
+    for(const o of delivered) await OrderManager.delete(o);
+  }catch(err){
+    console.error(err); toast('Could not clear delivered orders.', 'error'); return;
+  }
+  ORDERS = ORDERS.filter(o=>o.status!=='Delivered');
+  renderKotBoard();
+  updateDashboard();
+  renderPaymentsTable();
+  drawReportChart(); drawPaymentChart(); drawRevenueChart(); renderTopLists();
+  toast(`${delivered.length} delivered order(s) cleared`, 'success');
+});
 
 function renderDashKot(){
   const wrap = $('#dashKot');
@@ -734,9 +805,11 @@ function renderMenuTable(filterCat="All"){
     updateDashboard();
     toast(`${m.name} stock set to "${stockLabel(m.stock)}"`, 'success');
     if(m.stock==='out'){
-      addNotification(`${m.name} is now Out of Stock`, 'fa-solid fa-circle-exclamation');
+      addNotification(`${m.name} is now Out of Stock`, 'fa-solid fa-circle-exclamation', { page:'menu', refType:'stock', refId:m.id });
     } else if(m.stock==='low'){
-      addNotification(`${m.name} is running Low on Stock`, 'fa-solid fa-triangle-exclamation');
+      addNotification(`${m.name} is running Low on Stock`, 'fa-solid fa-triangle-exclamation', { page:'menu', refType:'stock', refId:m.id });
+    } else {
+      autoClearNotifications('stock', m.id);
     }
   }));
 }
@@ -779,9 +852,10 @@ function renderCustomers(){
     <tr>
       <td>${c.name}</td><td>${c.phone}</td><td>${c.orders}</td>
       <td>${fmt(c.totalSpent)}</td><td>${c.points} pts</td>
-      <td><i class="fa-solid fa-eye tbl-action"></i><i class="fa-solid fa-trash tbl-action edit-only" data-delcust="${c.phone}"></i></td>
+      <td><i class="fa-solid fa-eye tbl-action" data-viewcust="${c.phone}"></i><i class="fa-solid fa-trash tbl-action edit-only" data-delcust="${c.phone}"></i></td>
     </tr>
   `).join('');
+  $$('[data-viewcust]').forEach(b=>b.addEventListener('click', ()=> openCustomerHistory(b.dataset.viewcust)));
   $$('[data-delcust]').forEach(b=>b.addEventListener('click', async ()=>{
     const cust = CUSTOMERS.find(c=>c.phone===b.dataset.delcust);
     try{ if(cust && cust.id) await CustomerManager.delete(cust.id); }catch(err){ console.error(err); toast('Could not delete customer.', 'error'); return; }
@@ -791,6 +865,79 @@ function renderCustomers(){
   }));
   animateStatCounters();
 }
+
+/** Shows every separate order (slip) a customer has placed, most recent first. */
+function openCustomerHistory(phone){
+  const cust = CUSTOMERS.find(c=>c.phone===phone);
+  if(!cust) return;
+  const orders = ORDERS.filter(o=>o.phone===phone).sort((a,b)=> new Date(b.time) - new Date(a.time));
+
+  $('#customerHistoryMeta').innerHTML = `<b style="color:var(--white)">${cust.name}</b> · ${cust.phone} · ${cust.orders} orders · ${fmt(cust.totalSpent)} total spent`;
+  $('#customerHistoryList').innerHTML = orders.length ? orders.map(o=>{
+    const time = new Date(o.time);
+    const itemsStr = o.items.map(i=>`${i.qty}x ${i.name}`).join(', ');
+    return `
+      <div class="order-slip">
+        <div class="order-slip-head"><b>#${o.token}</b><small>${time.toLocaleDateString('en-GB')} · ${time.toLocaleTimeString('en-US')}</small></div>
+        <div class="order-slip-items">${o.type} · ${itemsStr}</div>
+        <div class="order-slip-total"><span>Payment: ${o.payment}</span><b>${fmt(o.grand)}</b></div>
+      </div>
+    `;
+  }).join('') : `<p class="muted" style="text-align:center;padding:20px;">No orders found for this customer yet.</p>`;
+
+  $('#customerHistoryModal').classList.remove('hidden');
+}
+
+/* ---- Customers export (PDF via print dialog, Word via a .doc download) ---- */
+function buildCustomersReportHTML(){
+  const rows = CUSTOMERS.map(c=>`
+    <tr>
+      <td style="padding:6px 10px;border:1px solid #ddd;">${c.name}</td>
+      <td style="padding:6px 10px;border:1px solid #ddd;">${c.phone}</td>
+      <td style="padding:6px 10px;border:1px solid #ddd;">${c.orders}</td>
+      <td style="padding:6px 10px;border:1px solid #ddd;">${fmt(c.totalSpent)}</td>
+      <td style="padding:6px 10px;border:1px solid #ddd;">${c.points}</td>
+    </tr>
+  `).join('') || `<tr><td colspan="5" style="padding:8px;border:1px solid #ddd;color:#888;">No customers yet.</td></tr>`;
+
+  return `
+    <div style="font-family:Arial,Helvetica,sans-serif;color:#111;max-width:700px;margin:0 auto;">
+      <h1 style="color:#e63946;margin-bottom:0;">MIRCHI 365</h1>
+      <p style="margin-top:4px;color:#555;">Customer List — generated ${new Date().toLocaleString('en-GB')}</p>
+      <hr style="border:none;border-top:2px solid #e63946;margin:14px 0;">
+      <table style="border-collapse:collapse;width:100%;">
+        <tr>
+          <th style="padding:6px 10px;border:1px solid #ddd;background:#f4f4f4;text-align:left;">Name</th>
+          <th style="padding:6px 10px;border:1px solid #ddd;background:#f4f4f4;text-align:left;">Mobile Number</th>
+          <th style="padding:6px 10px;border:1px solid #ddd;background:#f4f4f4;text-align:left;">Orders Placed</th>
+          <th style="padding:6px 10px;border:1px solid #ddd;background:#f4f4f4;text-align:left;">Total Spent</th>
+          <th style="padding:6px 10px;border:1px solid #ddd;background:#f4f4f4;text-align:left;">Reward Points</th>
+        </tr>
+        ${rows}
+      </table>
+    </div>
+  `;
+}
+$('#downloadCustPdfBtn').addEventListener('click', ()=>{
+  const html = buildCustomersReportHTML();
+  const w = window.open('', '_blank', 'width=800,height=900');
+  w.document.write(`<html><head><title>Mirchi365-Customers</title></head><body>${html}</body></html>`);
+  w.document.close(); w.focus();
+  setTimeout(()=> w.print(), 300);
+  toast('Preparing customer list PDF…', 'info');
+});
+$('#downloadCustWordBtn').addEventListener('click', ()=>{
+  const html = buildCustomersReportHTML();
+  const fullDoc = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+    <head><meta charset="utf-8"><title>Mirchi365-Customers</title></head><body>${html}</body></html>`;
+  const blob = new Blob(['\ufeff', fullDoc], { type: 'application/msword' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `Mirchi365-Customers-${new Date().toISOString().slice(0,10)}.doc`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('Word file downloaded', 'success');
+});
 $('#addCustomerBtn').addEventListener('click', ()=> $('#customerModal').classList.remove('hidden'));
 $('#saveCustomerBtn').addEventListener('click', async ()=>{
   const name = $('#newCustName').value.trim();
@@ -807,7 +954,7 @@ $('#saveCustomerBtn').addEventListener('click', async ()=>{
   renderCustomers(); closeModal('customerModal');
   $('#newCustName').value=''; $('#newCustPhone').value=''; $('#newCustAddress').value='';
   toast('Customer added','success');
-  addNotification(`New customer ${name} registered`, 'fa-solid fa-user-plus');
+  addNotification(`New customer ${name} registered`, 'fa-solid fa-user-plus', { page:'customers', refType:'customer', refId: phone });
 });
 
 /* -------------------------------------------------------------------------
@@ -917,8 +1064,13 @@ function drawBarChart(canvasId, labels, data, gradientColors){
   const canvas = $('#'+canvasId); if(!canvas) return;
   const ctx = canvas.getContext('2d');
   const dpr = window.devicePixelRatio||1;
-  const w = canvas.clientWidth||canvas.parentElement.clientWidth, h = 220;
-  canvas.width = w*dpr; canvas.height = h*dpr; ctx.scale(dpr,dpr);
+  const w = canvas.clientWidth || canvas.parentElement.clientWidth || 300, h = 220;
+  // Bitmap resolution scales with devicePixelRatio for crispness, but the CSS
+  // display size must stay at the logical (w,h) — otherwise the chart renders
+  // dpr-times too wide on any screen with scaling (virtually all phones/laptops).
+  canvas.width = w*dpr; canvas.height = h*dpr;
+  canvas.style.width = w+'px'; canvas.style.height = h+'px';
+  ctx.setTransform(dpr,0,0,dpr,0,0);
   ctx.clearRect(0,0,w,h);
   const max = Math.max(...data,1);
   const barW = w/data.length*0.55;
@@ -960,6 +1112,24 @@ function drawPaymentChart(){
   const methods = ['Cash','Easypaisa','JazzCash','Bank','Card'];
   const counts = methods.map(m=>ORDERS.filter(o=>o.payment===m || (m==='Bank'&&o.payment==='Bank Transfer')).length || Math.round(Math.random()*3));
   drawBarChart('paymentChart', methods, counts, ['#f4f4f7','#ffb703']);
+}
+
+// Charts are drawn onto a fixed-resolution <canvas>, so they must be redrawn
+// whenever the viewport size changes (resize, orientation change, sidebar
+// collapse/expand) or they'd stay locked to whatever size they were first
+// measured at — this is what was making the Dashboard/Reports charts look
+// wrong after the layout settled on PC and mobile.
+let _chartResizeTimer = null;
+window.addEventListener('resize', ()=>{
+  clearTimeout(_chartResizeTimer);
+  _chartResizeTimer = setTimeout(()=>{
+    if(appInitialized){ drawRevenueChart(); drawReportChart(); drawPaymentChart(); }
+  }, 150);
+});
+if(document.fonts && document.fonts.ready){
+  document.fonts.ready.then(()=>{
+    if(appInitialized){ drawRevenueChart(); drawReportChart(); drawPaymentChart(); }
+  });
 }
 
 function renderTopLists(){
@@ -1202,7 +1372,7 @@ const TRANSLATIONS = {
     nav_dashboard:"Dashboard", nav_neworder:"New Order", nav_kitchen:"Kitchen Orders", nav_menu:"Menu",
     nav_customers:"Customers", nav_payments:"Payments", nav_inventory:"Inventory", nav_reports:"Reports",
     nav_offers:"Offers", nav_settings:"Settings", nav_logout:"Logout",
-    notifications:"Notifications", role_view_only:"View Only", my_profile:"My Profile",
+    notifications:"Notifications", clear_all_label:"Clear All", role_view_only:"View Only", my_profile:"My Profile",
     page_dashboard_title:"Dashboard", dash_subtitle:"Welcome back — here's how Mirchi 365 is doing today.",
     stat_today_sales:"Today's Sales", stat_today_orders:"Today's Orders", stat_customers:"Customers",
     stat_pending_orders:"Pending Orders", stat_completed_orders:"Completed Orders", stat_monthly_revenue:"Monthly Revenue",
@@ -1214,14 +1384,14 @@ const TRANSLATIONS = {
     cart_empty:"Cart is empty — add something spicy!", subtotal_label:"Subtotal", discount_label:"Discount",
     service_charges_label:"Service Charges", delivery_charges_label:"Delivery Charges", grand_total_label:"Grand Total",
     checkout_label:"Checkout",
-    page_kitchen_title:"Kitchen Orders (KOT)", kitchen_subtitle:"Live order tickets for the kitchen team.",
+    page_kitchen_title:"Kitchen Orders (KOT)", kitchen_subtitle:"Live order tickets for the kitchen team.", btn_clear_delivered:"Clear Delivered",
     kot_status_pending:"Pending", kot_status_preparing:"Preparing", kot_status_ready:"Ready", kot_status_delivered:"Delivered",
     page_menu_title:"Menu Management", menu_subtitle:"All food items across categories.", ph_search_generic:"Search…",
     th_item:"Item", th_category:"Category", th_price:"Price", th_stock:"Stock",
     btn_add_item:"Add Item", modal_add_menu_item:"Add Menu Item", lbl_item_name:"Item Name",
     page_customers_title:"Customers", customers_subtitle:"Manage your guests and reward points.",
     btn_add_customer:"Add Customer", th_name:"Name", th_phone:"Phone", th_orders:"Orders",
-    th_total_spent:"Total Spent", th_reward_pts:"Reward Pts",
+    th_total_spent:"Total Spent", th_reward_pts:"Reward Pts", modal_order_history:"Order History",
     page_payments_title:"Payments", payments_subtitle:"Accepted methods & recent transactions.",
     pay_cash:"Cash", pay_cash_desc:"Paid at counter", pay_easypaisa:"Easypaisa", pay_jazzcash:"JazzCash",
     pay_bank:"Bank Transfer", pay_card:"Card Payment", pay_card_desc:"Visa / Mastercard", pay_qr:"Scan QR",
@@ -1264,7 +1434,7 @@ const TRANSLATIONS = {
     nav_dashboard:"ڈیش بورڈ", nav_neworder:"نیا آرڈر", nav_kitchen:"کچن آرڈرز", nav_menu:"مینو",
     nav_customers:"کسٹمرز", nav_payments:"ادائیگیاں", nav_inventory:"انوینٹری", nav_reports:"رپورٹس",
     nav_offers:"آفرز", nav_settings:"ترتیبات", nav_logout:"لاگ آؤٹ",
-    notifications:"اطلاعات", role_view_only:"صرف ملاحظہ", my_profile:"میری پروفائل",
+    notifications:"اطلاعات", clear_all_label:"سب صاف کریں", role_view_only:"صرف ملاحظہ", my_profile:"میری پروفائل",
     page_dashboard_title:"ڈیش بورڈ", dash_subtitle:"خوش آمدید — آج مرچی 365 کی کارکردگی ملاحظہ کریں۔",
     stat_today_sales:"آج کی سیل", stat_today_orders:"آج کے آرڈرز", stat_customers:"کسٹمرز",
     stat_pending_orders:"زیرِ التوا آرڈرز", stat_completed_orders:"مکمل آرڈرز", stat_monthly_revenue:"ماہانہ آمدنی",
@@ -1276,14 +1446,14 @@ const TRANSLATIONS = {
     cart_empty:"کارٹ خالی ہے — کچھ تیز مزیدار شامل کریں!", subtotal_label:"سب ٹوٹل", discount_label:"رعایت",
     service_charges_label:"سروس چارجز", delivery_charges_label:"ڈیلیوری چارجز", grand_total_label:"کل رقم",
     checkout_label:"چیک آؤٹ",
-    page_kitchen_title:"کچن آرڈرز (KOT)", kitchen_subtitle:"کچن ٹیم کے لیے لائیو آرڈر ٹکٹس۔",
+    page_kitchen_title:"کچن آرڈرز (KOT)", kitchen_subtitle:"کچن ٹیم کے لیے لائیو آرڈر ٹکٹس۔", btn_clear_delivered:"ڈیلیورڈ صاف کریں",
     kot_status_pending:"زیرِ التوا", kot_status_preparing:"تیار ہو رہا ہے", kot_status_ready:"تیار", kot_status_delivered:"پہنچا دیا گیا",
     page_menu_title:"مینو مینجمنٹ", menu_subtitle:"تمام کیٹیگریز کی فوڈ آئٹمز۔", ph_search_generic:"تلاش کریں…",
     th_item:"آئٹم", th_category:"کیٹیگری", th_price:"قیمت", th_stock:"اسٹاک",
     btn_add_item:"آئٹم شامل کریں", modal_add_menu_item:"مینو آئٹم شامل کریں", lbl_item_name:"آئٹم کا نام",
     page_customers_title:"کسٹمرز", customers_subtitle:"اپنے مہمانوں اور ریوارڈ پوائنٹس کو منظم کریں۔",
     btn_add_customer:"کسٹمر شامل کریں", th_name:"نام", th_phone:"فون", th_orders:"آرڈرز",
-    th_total_spent:"کل خرچ", th_reward_pts:"ریوارڈ پوائنٹس",
+    th_total_spent:"کل خرچ", th_reward_pts:"ریوارڈ پوائنٹس", modal_order_history:"آرڈر کی تاریخ",
     page_payments_title:"ادائیگیاں", payments_subtitle:"قابلِ قبول طریقے اور حالیہ لین دین۔",
     pay_cash:"نقد", pay_cash_desc:"کاؤنٹر پر ادا کریں", pay_easypaisa:"ایزی پیسہ", pay_jazzcash:"جاز کیش",
     pay_bank:"بینک ٹرانسفر", pay_card:"کارڈ ادائیگی", pay_card_desc:"ویزا / ماسٹر کارڈ", pay_qr:"QR اسکین کریں",
@@ -1326,7 +1496,7 @@ const TRANSLATIONS = {
     nav_dashboard:"ڊيش بورڊ", nav_neworder:"نئون آرڊر", nav_kitchen:"ڪچن آرڊر", nav_menu:"مينيو",
     nav_customers:"گراهڪ", nav_payments:"ادائيگيون", nav_inventory:"انونٽري", nav_reports:"رپورٽون",
     nav_offers:"آفرون", nav_settings:"سيٽنگون", nav_logout:"لاگ آئوٽ",
-    notifications:"اطلاعون", role_view_only:"صرف ڏسڻ", my_profile:"منهنجي پروفائيل",
+    notifications:"اطلاعون", clear_all_label:"سڀ صاف ڪريو", role_view_only:"صرف ڏسڻ", my_profile:"منهنجي پروفائيل",
     page_dashboard_title:"ڊيش بورڊ", dash_subtitle:"ڀليڪار — اڄ مرچي 365 ڪيئن ڪم ڪري رهيو آهي.",
     stat_today_sales:"اڄ جي وڪرو", stat_today_orders:"اڄ جا آرڊر", stat_customers:"گراهڪ",
     stat_pending_orders:"بيٺل آرڊر", stat_completed_orders:"مڪمل آرڊر", stat_monthly_revenue:"مهيني جي آمدني",
@@ -1338,14 +1508,14 @@ const TRANSLATIONS = {
     cart_empty:"ڪارٽ خالي آهي — ڪجهه مساليدار شامل ڪريو!", subtotal_label:"سب ٽوٽل", discount_label:"رعايت",
     service_charges_label:"سروس چارجز", delivery_charges_label:"ڊليوري چارجز", grand_total_label:"ڪل رقم",
     checkout_label:"چيڪ آئوٽ",
-    page_kitchen_title:"ڪچن آرڊر (KOT)", kitchen_subtitle:"ڪچن ٽيم لاءِ لائيو آرڊر ٽڪيٽون.",
+    page_kitchen_title:"ڪچن آرڊر (KOT)", kitchen_subtitle:"ڪچن ٽيم لاءِ لائيو آرڊر ٽڪيٽون.", btn_clear_delivered:"ڊليورڊ صاف ڪريو",
     kot_status_pending:"بيٺل", kot_status_preparing:"تيار ٿي رهيو آهي", kot_status_ready:"تيار", kot_status_delivered:"پهچائي ڇڏيو ويو",
     page_menu_title:"مينيو مينيجمينٽ", menu_subtitle:"سڀني ڪيٽيگرين جا فوڊ آئٽم.", ph_search_generic:"ڳوليو…",
     th_item:"آئٽم", th_category:"ڪيٽيگري", th_price:"قيمت", th_stock:"اسٽاڪ",
     btn_add_item:"آئٽم شامل ڪريو", modal_add_menu_item:"مينيو آئٽم شامل ڪريو", lbl_item_name:"آئٽم جو نالو",
     page_customers_title:"گراهڪ", customers_subtitle:"پنهنجن مهمانن ۽ رعايتي پوائنٽن کي سنڀاليو.",
     btn_add_customer:"گراهڪ شامل ڪريو", th_name:"نالو", th_phone:"فون", th_orders:"آرڊر",
-    th_total_spent:"ڪل خرچ", th_reward_pts:"رعايتي پوائنٽ",
+    th_total_spent:"ڪل خرچ", th_reward_pts:"رعايتي پوائنٽ", modal_order_history:"آرڊر جي تاريخ",
     page_payments_title:"ادائيگيون", payments_subtitle:"قبول ٿيندڙ طريقا ۽ تازيون ادائيگيون.",
     pay_cash:"نقد", pay_cash_desc:"ڪائونٽر تي ادا ڪريو", pay_easypaisa:"ايزي پيسا", pay_jazzcash:"جاز ڪيش",
     pay_bank:"بينڪ ٽرانسفر", pay_card:"ڪارڊ ادائيگي", pay_card_desc:"ويزا / ماسٽر ڪارڊ", pay_qr:"QR اسڪين ڪريو",
