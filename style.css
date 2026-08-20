@@ -54,7 +54,7 @@ html,body{ height:100%; }
 
 .page-head h2{ font-size: clamp(18px, 4.5vw, 22px); }
 .login-brand h1{ font-size: clamp(20px, 6vw, 26px); }
-.stat-card h3{ font-size: clamp(14px, 3.5vw, 19px); }
+.stat-card h3{ font-size: clamp(16px, 2.1vw, 21px); }
 
 /* Respect notches / safe areas on modern phones */
 .topbar{ padding-left: max(14px, env(safe-area-inset-left)); padding-right: max(14px, env(safe-area-inset-right)); }
@@ -417,10 +417,10 @@ body.view-only .view-only-only{ display:inline-block; }
 /* ==========================================================================
    STAT CARDS / DASHBOARD
    ========================================================================== */
-.stat-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:16px; margin-bottom:20px; }
-.stat-card{ display:flex; align-items:center; gap:14px; padding:18px; min-height:88px; transition: transform .25s var(--ease); }
-.stat-card > div:last-child{ min-width:0; }
-.stat-card h3{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.stat-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:16px; margin-bottom:20px; }
+.stat-card{ display:flex; align-items:center; gap:14px; padding:18px 20px; min-height:100px; transition: transform .25s var(--ease); }
+.stat-card > div:last-child{ min-width:0; flex:1; }
+.stat-card h3{ white-space:normal; overflow:visible; text-overflow:clip; word-break:break-word; line-height:1.25; }
 .stat-card:hover{ transform: translateY(-4px); }
 .stat-icon{
   width:46px; height:46px; border-radius:13px; flex-shrink:0;
@@ -429,8 +429,8 @@ body.view-only .view-only-only{ display:inline-block; }
 .stat-icon.yellow{ background: rgba(255,183,3,.15); color:var(--yellow); }
 .stat-icon.red{ background: rgba(230,57,70,.15); color:var(--red-2); }
 .stat-icon.white{ background: rgba(255,255,255,.08); color:var(--white); }
-.stat-card small{ color:var(--muted); font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; }
-.stat-card h3{ font-family:var(--font-display); font-size:19px; margin-top:2px; }
+.stat-card small{ color:var(--muted); font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; display:block; }
+.stat-card h3{ font-family:var(--font-display); font-size:clamp(16px, 2.1vw, 21px); margin-top:3px; }
 
 .dash-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:16px; margin-bottom:16px; }
 .dash-grid > .panel{ min-width:0; }
@@ -795,8 +795,9 @@ canvas{ display:block; width:100%; max-width:100%; }
 }
 
 @media (max-width:520px){
-  .stat-card{ padding:14px; gap:10px; }
-  .stat-card h3{ font-size:16px; }
+  .stat-grid{ grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); }
+  .stat-card{ padding:14px; gap:10px; min-height:90px; }
+  .stat-card h3{ font-size:16px; white-space:normal; overflow:visible; }
   .login-card{ padding:30px 22px; }
   .modal{ padding:20px; }
   .receipt-modal{ width:100%; }
