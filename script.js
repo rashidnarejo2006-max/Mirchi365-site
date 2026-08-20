@@ -597,13 +597,19 @@ $('#confirmPaymentBtn').addEventListener('click', async ()=>{
       addNotification(`New customer ${custResult.record.name} registered`, 'fa-solid fa-user-plus', { page:'customers', refType:'customer', refId: custResult.record.phone });
     }
 
-    // Stock roughly decrements (cosmetic) — persist any change that happens.
+    // Stock roughly decrements as items sell (cosmetic, since menu items don't track
+    // exact quantities) — persist any change and notify so alerts stay 100% in sync.
     for(const ci of order.items){
       const m = MENU.find(x=>x.id===ci.id);
-      if(m && m.stock==='in' && Math.random()<0.08){
+      if(!m) continue;
+      if(m.stock==='in' && Math.random()<0.08){
         m.stock = 'low';
         await MenuManager.update(m);
         addNotification(`${m.name} is running Low on Stock`, 'fa-solid fa-triangle-exclamation', { page:'menu', refType:'stock', refId:m.id });
+      }else if(m.stock==='low' && Math.random()<0.15){
+        m.stock = 'out';
+        await MenuManager.update(m);
+        addNotification(`${m.name} is now Out of Stock`, 'fa-solid fa-circle-exclamation', { page:'menu', refType:'stock', refId:m.id });
       }
     }
   }catch(err){
@@ -988,9 +994,24 @@ function renderInventory(){
       it.stock = +newStock;
       try{ await InventoryManager.update(it); }catch(err){ console.error(err); toast('Could not save stock update.', 'error'); return; }
       renderInventory(); updateDashboard(); toast('Stock updated','success');
+      notifyInventoryStatus(it);
     }
   }));
   $('#lowStockCount').dataset.counter = INVENTORY.filter(it=>invStatus(it)!=='in').length;
+}
+
+/** Fires (or clears) a low-stock / out-of-stock alert for an ingredient, based on its
+    current quantity. Called any time an inventory item's stock is added or edited,
+    so alerts are 100% in sync with the real numbers instead of relying on chance. */
+function notifyInventoryStatus(it){
+  const st = invStatus(it);
+  if(st === 'out'){
+    addNotification(`${it.name} is now Out of Stock (0 ${it.unit})`, 'fa-solid fa-circle-exclamation', { page:'inventory', refType:'invstock', refId: it.id });
+  }else if(st === 'low'){
+    addNotification(`${it.name} is running Low on Stock (${it.stock} ${it.unit} left)`, 'fa-solid fa-triangle-exclamation', { page:'inventory', refType:'invstock', refId: it.id });
+  }else{
+    autoClearNotifications('invstock', it.id);
+  }
 }
 $('#addStockBtn').addEventListener('click', ()=> $('#stockModal').classList.remove('hidden'));
 $('#saveStockBtn').addEventListener('click', async ()=>{
@@ -1011,6 +1032,7 @@ $('#saveStockBtn').addEventListener('click', async ()=>{
   renderInventory(); closeModal('stockModal');
   ['newStockName','newStockQty','newStockUnit','newStockSupplier','newStockPurchase','newStockSelling'].forEach(id=>$('#'+id).value='');
   toast('Inventory item added','success');
+  notifyInventoryStatus(result.record);
 });
 
 /* -------------------------------------------------------------------------
